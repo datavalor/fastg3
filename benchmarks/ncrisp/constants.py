@@ -1,0 +1,5 @@
+MARKERSIZE = 3
+N_REPEATS = 10
+N_STEPS = 10
+GRAPH_FOLDER = 'graphs/'
+DILL_FOLDER = 'dill/'

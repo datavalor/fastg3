@@ -5,7 +5,7 @@ import sys
 sys.path.insert(1, '../')
 import fastg3.ncrisp as g3ncrisp
 
-df = data("diamonds")#.sample(n=45000, random_state=27)
+df = data("diamonds").sample(n=100, random_state=27)
 
 xparams = {
     'carat':{
@@ -47,6 +47,8 @@ if __name__ == '__main__':
         join_type="auto",
         verbose=False)
 
+    return_cover=True
+
     print(f'Diamond dataset contains {len(df.index)} rows.')
     print(len(VPE.enum_vps()), "violating pairs.")
 
@@ -57,31 +59,37 @@ if __name__ == '__main__':
     # Exact
     print("-> Exact computation")
     start=time.time()
-    wgyc = rg3.exact(method="wgyc")
+    wgyc = rg3.exact(method="wgyc", return_cover=return_cover)
     print(f'WeGotYouCovered value computed in {time.time()-start}s')
 
 
     # Lower bound
     print("-> Lower bound")
     start=time.time()
-    maximal_matching = rg3.lower_bound(method="maxmatch")
+    maximal_matching = rg3.lower_bound(method="maxmatch", return_cover=return_cover)
     print(f'Maximal matching computed in {1000*(time.time()-start)}ms')
     start=time.time()
-    maximum_matching = rg3.lower_bound(method="mvmatch")
+    maximum_matching = rg3.lower_bound(method="mvmatch", return_cover=return_cover)
     print(f'Maximum matching computed in {1000*(time.time()-start)}ms')
 
     # Upper bound
     print("-> Upper bound")
     start=time.time()
-    approx2 = rg3.upper_bound(method="2approx")
+    approx2 = rg3.upper_bound(method="2approx", return_cover=return_cover)
     print(f'Greedy 2-approximation algorithm computed in {1000*(time.time()-start)}ms')
     start=time.time()
-    gic = rg3.upper_bound(method="gic")
+    gic = rg3.upper_bound(method="gic", return_cover=return_cover)
     print(f'Greedy independent Cover upper bound computed in {1000*(time.time()-start)}ms')
     start=time.time()
-    numvc = rg3.upper_bound(method="numvc")
+    numvc = rg3.upper_bound(method="numvc", return_cover=return_cover)
     print(f'Numvc tight heuristic computed in {time.time()-start}s')
 
-    print(f'{"{:.2f}".format(maximal_matching)} <= {"{:.2f}".format(maximum_matching)} <= g3={"{:.2f}".format(wgyc)} <= {"{:.2f}".format(numvc)} <= {"{:.2f}".format(gic)} <= {"{:.2f}".format(approx2)}')
+    if return_cover:
+        print("Exact:", sorted(wgyc))
+        print("NuMVC:", sorted(numvc))
+        print("GIC:", sorted(gic))
+        print("approx2:", sorted(gic))
+    else:
+        print(f'{"{:.2f}".format(maximal_matching)} <= {"{:.2f}".format(maximum_matching)} <= g3={"{:.2f}".format(wgyc)} <= {"{:.2f}".format(numvc)} <= {"{:.2f}".format(gic)} <= {"{:.2f}".format(approx2)}')
     
     

@@ -29,6 +29,7 @@ cdef extern from "libs/LibMVC/numvc.hpp" namespace "libmvc":
         NuMVC(vp_list_int edges, const int& num_vertices, int optimal_size, int cutoff_time_s, bool verbose) nogil except +
         void cover_LS() nogil except +
         int get_best_cover_size() nogil except +
+        cpp_vector[int] get_cover() nogil except +
 
 cdef int compare_size_t_pair(const void * a, const void * b) nogil:
     cdef:
@@ -72,31 +73,47 @@ cdef class RSolver:
             self.vps=self.vpe.enum_vps()
             self.computed=True
 
-    def exact(self, method="wgyc", timeout=10):
-        size = 0
+    def get_vps(self):
+        return self.vps
+
+    def exact(self, method="wgyc", timeout=10, return_cover=False):
+        """
+        Provides the exact value of g3/mvc.
+        """
+        cover = []
         if method=="wgyc":
-            size = self.wgyc(time_s=timeout)
-        return size/self.n_tuples
+            cover = self.wgyc(time_s=timeout)
+        
+        if return_cover: return cover
+        else: return len(cover)/self.n_tuples
 
-    def upper_bound(self, method="gic", numvc_time=2):
-        size = 0
+    def upper_bound(self, method="gic", numvc_time=2, return_cover=False):
+        """
+        Provides an upper bound on g3/mvc.
+        """
+        cover = []
         if method=="gic":
-            size = self.gic()
+            cover = self.gic()
         elif method=="2approx":
-            size = self.mvc_2_approx()
+            cover = self.mvc_2_approx()
         elif method=="numvc":
-            size = self.numvc(time_s=numvc_time)
-        return size/self.n_tuples
+            cover = self.numvc(time_s=numvc_time)
 
-    def lower_bound(self, method="maxmatch", numvc_time=2):
-        size = 0
+        if return_cover: return cover
+        else: return len(cover)/self.n_tuples
+
+    def lower_bound(self, method="maxmatch", numvc_time=2, return_cover=False):
+        """
+        Provides a lower bound on g3/mvc.
+        """
+        size = []
         if method=="maxmatch":
             size = self.maximal_matching()
         elif method=="mvmatch":
             size = self.mv_matching()
         return size/self.n_tuples
 
-    cdef int mvc_2_approx(self):
+    cdef cpp_vector[size_t] mvc_2_approx(self):
         """
         Classical greedy mvc algorithm.
         Finds a 2-approximate minimum vertex cover.
@@ -123,9 +140,9 @@ cdef class RSolver:
                 if dereference(cost_it).second==0: 
                     cover.push_back(dereference(cost_it).first)
                 postincrement(cost_it)
-        return cover.size()
+        return cover
 
-    cdef int gic(self):
+    cdef cpp_vector[size_t] gic(self):
         """
         Greedy independent cover.
         Finds a approximate minimum vertex cover.
@@ -134,7 +151,7 @@ cdef class RSolver:
             unordered_map[size_t, int] removed_vertices
             adjacency_map_iterator am_it = self.vps_am.begin()
             cpp_vector[size_t_pair] ordered_vertices
-            size_t C = 0
+            cpp_vector[size_t] cover
             size_t i
             size_t j
             size_t neighbor
@@ -149,9 +166,9 @@ cdef class RSolver:
                     for j in range(self.vps_am[ordered_vertices[i].first].size()):
                         neighbor=self.vps_am[ordered_vertices[i].first][j]
                         if removed_vertices.find(neighbor)==removed_vertices.end():
-                            C+=1
+                            cover.push_back(neighbor)
                         removed_vertices[neighbor]=0
-        return C
+        return cover
 
     cdef int maximal_matching(self):
         """
@@ -173,7 +190,7 @@ cdef class RSolver:
                     nodes[v]=0
         return <int>matching.size()
 
-    cdef int numvc(self, int time_s):
+    cdef cpp_vector[int] numvc(self, int time_s):
         """
         Numvc: Heuristic algorithm for solving the MVC.
         """
@@ -186,9 +203,10 @@ cdef class RSolver:
                 numvc_edges.push_back(<vp_type_int> self.vps[i])
             solver = new NuMVC(numvc_edges, self.max_id+1, 0, time_s, False);
             solver.cover_LS()
-        return solver.get_best_cover_size()
+        # mvc_size = get_best_cover_size()
+        return solver.get_cover()
 
-    cdef int wgyc(self, int time_s=10):
+    cdef cpp_vector[size_t] wgyc(self, int time_s=10):
         """
         WeGotYouCovered: Exact algorithm for solving the MVC.
         """
@@ -199,18 +217,17 @@ cdef class RSolver:
         input_string += "EOF-MARKER"
 
         solver_path = Path(__file__).parent / "./libs/wgyc"
-        output = run([solver_path, f'--time_limit={str(time_s)}'],    #f'--time_limit{time_s}'
-            # stdout=PIPE, 
-            # timeout=time_s,
+        output = run([solver_path, f'--time_limit={str(time_s)}'],
             capture_output=True, text=True, check=True,
             input=input_string, encoding='ascii')
         r = output.stdout
         try:
-            mvc_size = int(r.split('\n')[0].split(' ')[3])
+            # mvc_size = int(r.split('\n')[0].split(' ')[3])
+            cover = [int(v) for v in r.split('\n')[1:-1]]
         except ValueError:
             print("Error while computing exact value with WeGotYouCovered.")
             raise
-        return mvc_size
+        return cover
 
     cdef int mv_matching(self):
         """

@@ -102,7 +102,7 @@ cdef class RSolver:
         if return_cover: return cover
         else: return len(cover)/self.n_tuples
 
-    def lower_bound(self, method="maxmatch", numvc_time=2, return_cover=False):
+    def lower_bound(self, method="maxmatch", numvc_time=2):
         """
         Provides a lower bound on g3/mvc.
         """
@@ -223,7 +223,7 @@ cdef class RSolver:
         r = output.stdout
         try:
             # mvc_size = int(r.split('\n')[0].split(' ')[3])
-            cover = [int(v) for v in r.split('\n')[1:-1]]
+            cover = [int(v)-1 for v in r.split('\n')[1:-1]]
         except ValueError:
             print("Error while computing exact value with WeGotYouCovered.")
             raise

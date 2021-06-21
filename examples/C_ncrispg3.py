@@ -66,10 +66,10 @@ if __name__ == '__main__':
     # Lower bound
     print("-> Lower bound")
     start=time.time()
-    maximal_matching = rg3.lower_bound(method="maxmatch", return_cover=return_cover)
+    maximal_matching = rg3.lower_bound(method="maxmatch")
     print(f'Maximal matching computed in {1000*(time.time()-start)}ms')
     start=time.time()
-    maximum_matching = rg3.lower_bound(method="mvmatch", return_cover=return_cover)
+    maximum_matching = rg3.lower_bound(method="mvmatch")
     print(f'Maximum matching computed in {1000*(time.time()-start)}ms')
 
     # Upper bound

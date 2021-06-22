@@ -281,6 +281,7 @@ vp_list Dataframe::ordered_join(std::vector<size_t> block, attr_list x_attrs, at
     size_t j=0;
     size_t k;
     for(size_t i=0; i<block.size()-1; i++){
+        std::cout << get_user_index(block[i]) << std::endl;
         while(j<block.size() && j<=i) j++;
         if(j>i){
             while(j<block.size() && is_attr_similar(x_attrs[0], block[i], block[j])) j++;

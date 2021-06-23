@@ -9,7 +9,8 @@ import sys
 sys.path.insert(1, '../')
 import fastg3.ncrisp as g3ncrisp
 
-n=50000
+n=30000
+n_sampled=3000
 df = data("diamonds").sample(n=n, replace=True, random_state=27).reset_index(drop=True)
 # print(df.head())
 
@@ -18,7 +19,7 @@ xparams = {
         'type': 'numerical',
         'predicate': 'metric',
         'metric': 'absolute',
-        'thresold': 0.05
+        'thresold': 50
     },
     'cut':{
         'type': 'categorical',
@@ -39,7 +40,7 @@ yparams = {
         'type': 'numerical',
         'predicate': 'metric',
         'metric': 'absolute',
-        'thresold': 10
+        'thresold': 50
     }
 }
 
@@ -66,7 +67,7 @@ if __name__ == '__main__':
 
     sub_GIC = g3ncrisp.SubGIC(g3ncrisp.VPEGraph(VPE))
     start=time.time()
-    sub_gic_cover = sub_GIC.estimate_mvc_size(2000)
+    sub_gic_cover = sub_GIC.estimate_mvc_size(n_sampled)
     print(f"GIC sublinear in {1000*(time.time()-start)}ms")
     # print("Sublinear GIC g3 is", len(sub_gic_cover)/len(df.index))
     print("Sublinear GIC g3 is", sub_gic_cover)
@@ -78,7 +79,6 @@ if __name__ == '__main__':
     #         nodes_color.append('r')
     #     else:
     #         nodes_color.append('k')
-
     # G = nx.Graph()
     # G.add_nodes_from(list(df.index))
     # G.add_edges_from(VPE.enum_vps())
@@ -100,7 +100,6 @@ if __name__ == '__main__':
     #         nodes_color.append('r')
     #     else:
     #         nodes_color.append('k')
-
     # G = nx.Graph()
     # G.add_nodes_from(list(df.index))
     # G.add_edges_from(VPE.enum_vps())
@@ -130,12 +129,12 @@ if __name__ == '__main__':
     print("-> Sublinear computation")
     sub_solverY = g3ncrisp.Yoshida2009(g3ncrisp.VPEGraph(VPE))
     start=time.time()
-    estimated_size = sub_solverY.estimate_mvc_size(2000)
+    estimated_size = sub_solverY.estimate_mvc_size(n_sampled)
     print(f"Yoshida sublinear in {1000*(time.time()-start)}ms")
     print(f"Estimation: {estimated_size}")
     sub_solverO = g3ncrisp.Onak2011(g3ncrisp.VPEGraph(VPE))
     start=time.time()
-    estimated_size = sub_solverO.estimate_mvc_size(2000)
+    estimated_size = sub_solverO.estimate_mvc_size(n_sampled)
     print(f"Onak sublinear in {1000*(time.time()-start)}ms")
     print(f"Estimation: {estimated_size}")
 

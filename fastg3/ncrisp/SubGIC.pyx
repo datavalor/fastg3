@@ -71,12 +71,15 @@ cdef class SubGIC:
                     W*=exp(log(rand()/RAND_MAX)/n)
         
         cdef size_t v_degree
-        for i in range(v_sample.size()):
-            # print(f'--------------------> {v_sample[i]} - {self.G.neighbors(v_sample[i])} neighbors')
-            # self.degree_map.clear()
-            self.explore_vertex_area(v_sample[i], v_sample[i])
-            self.handle_degree(self.G.degree(v_sample[i]), v_sample[i])
-            if self.cover[v_sample[i]]: mvc_sum += 1
+        with nogil:
+            for i in range(v_sample.size()):
+                # print(f'##############> {v_sample[i]} - {self.G.neighbors(v_sample[i])} neighbors')
+                # self.degree_map.clear()
+                if self.cover.find(v_sample[i]) == self.cover.end() and not self.explore_vertex_area(v_sample[i], v_sample[i]):
+                    self.handle_degree(self.G.degree(v_sample[i]), v_sample[i])
+                if self.cover[v_sample[i]]: mvc_sum += 1
+
+        print(len(self.cover), "vertices explored total!")
 
         return mvc_sum/n
 
@@ -99,6 +102,7 @@ cdef class SubGIC:
                 # Adding if possible
                 if self.cover.find(node_list[j])==self.cover.end():
                     neighbors1=self.G.neighbors(node_list[j])
+                    # with gil: print("ADDED", node_list[j], neighbors1)
                     for k in range(neighbors1.size()):
                         if neighbors1[k]==v_obj: v_obj_found = True 
                         self.cover[neighbors1[k]] = True

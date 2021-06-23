@@ -72,26 +72,15 @@ cdef class SubGIC:
         
         cdef size_t v_degree
         for i in range(v_sample.size()):
-            print(f'--------------------> {v_sample[i]} - {self.G.neighbors(v_sample[i])} neighbors')
+            # print(f'--------------------> {v_sample[i]} - {self.G.neighbors(v_sample[i])} neighbors')
+            # self.degree_map.clear()
             self.explore_vertex_area(v_sample[i], v_sample[i])
-            self.handle_degree(self.G.degree(v_sample[i]))
+            self.handle_degree(self.G.degree(v_sample[i]), v_sample[i])
             if self.cover[v_sample[i]]: mvc_sum += 1
 
-        # print(self.cover)
-        # test=0
-        cover_list = []
-        for k, v in self.cover:
-            if v: 
-                cover_list.append(k)
-        # print(test/len(self.cover))
+        return mvc_sum/n
 
-        print(self.G.neighbors(12))
-        print(self.G.neighbors(13))
-        
-        return cover_list
-        # return mvc_sum/n
-
-    cdef void handle_degree(self, size_t degree) nogil:
+    cdef bool handle_degree(self, size_t degree, size_t v_obj) nogil:
         # with gil: print("------------>")
         cdef:
             index_vector node_list = self.degree_map[degree]
@@ -100,23 +89,24 @@ cdef class SubGIC:
             size_t k
             size_t tmp
             index_vector neighbors1
+            bool v_obj_found = False
         for j in range(node_list.size()):
                 # Uniform shuffling
                 k = _rand_from_one_to(node_list.size()-j)+j-1
                 tmp = node_list[j]
                 node_list[j] = node_list[k]
                 node_list[k] = tmp
-                with gil: print(node_list[j], self.G.degree(node_list[j]), self.G.neighbors(node_list[j]))
                 # Adding if possible
                 if self.cover.find(node_list[j])==self.cover.end():
                     neighbors1=self.G.neighbors(node_list[j])
-                    with gil: print("ADDED", node_list[j], neighbors1)
                     for k in range(neighbors1.size()):
+                        if neighbors1[k]==v_obj: v_obj_found = True 
                         self.cover[neighbors1[k]] = True
                     self.cover[node_list[j]] = False
         self.degree_map[degree].clear()
+        return v_obj_found
 
-    cdef void explore_vertex_area(self, size_t v, size_t v_obj) nogil:
+    cdef bool explore_vertex_area(self, size_t v, size_t v_obj) nogil:
         self.discovered[v] = True
 
         cdef: 
@@ -130,10 +120,15 @@ cdef class SubGIC:
         for i in range(neighbors.size()):
             n_degree = self.G.degree(neighbors[i])
             to_visit=True
-            if self.discovered.find(neighbors[i]) != self.discovered.end():# or self.cover.find(neighbors[i]) != self.cover.end():
+            if self.discovered.find(neighbors[i]) != self.discovered.end() or self.cover.find(neighbors[i]) != self.cover.end():
                 to_visit=False
             if to_visit and n_degree<v_degree:
-                self.explore_vertex_area(neighbors[i], v_obj)
-                self.handle_degree(n_degree)
+                if self.explore_vertex_area(neighbors[i], v_obj):
+                    return True
+                if self.handle_degree(n_degree, v_obj):
+                    return True
             elif to_visit and n_degree==v_degree:
-                self.explore_vertex_area(neighbors[i], v_obj)
+                if self.explore_vertex_area(neighbors[i], v_obj):
+                    return True
+        
+        return False

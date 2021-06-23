@@ -256,10 +256,11 @@ bool Dataframe::is_attr_similar(std::string col_name, size_t index_i, size_t ind
 bool Dataframe::is_vp(size_t i, size_t j, attr_list x_attrs, attr_list y_attrs){
     std::vector<std::string>::iterator vec_it = x_attrs.begin();
     while(vec_it != x_attrs.end() && is_attr_similar(*vec_it, i, j)) vec_it++;
-    if(vec_it == x_attrs.end()){
+    if(vec_it == x_attrs.end())
+    {
         vec_it = y_attrs.begin();
-        while(vec_it != y_attrs.end() && is_attr_similar(*vec_it, i, j)) vec_it++;
-        if(vec_it != y_attrs.end()) return true;
+        while(vec_it != y_attrs.end() && !is_attr_similar(*vec_it, i, j)) vec_it++;
+        if(vec_it == y_attrs.end()) return true;
     }
     return false;
 }
@@ -285,7 +286,7 @@ vp_list Dataframe::ordered_join(std::vector<size_t> block, attr_list x_attrs, at
         if(j>i){
             while(j<block.size() && is_attr_similar(x_attrs[0], block[i], block[j])) j++;
             for(k=i+1; k<j; k++){
-                if(x_attrs.size()==1 or is_vp(block[i], block[k], attr_list(x_attrs.begin()+1, x_attrs.end()), y_attrs)){
+                if(is_vp(block[i], block[k], attr_list(x_attrs.begin()+1, x_attrs.end()), y_attrs)){
                     vps.push_back(vp_type(get_user_index(block[i]), get_user_index(block[k])));
                 }
             }

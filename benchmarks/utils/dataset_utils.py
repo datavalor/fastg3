@@ -66,7 +66,7 @@ def load_hydroturbine(n_antecedents=3, n_consequents=1, ncrisp=False):
         n_consequents
     )
     if ncrisp:
-        df = df.sample(200000, random_state=27)
+        df = df.sample(100000, random_state=27)
         return df, HYDRO_XPARAMS, HYDRO_YPARAMS
     else:
         return df, antecedents, consequents

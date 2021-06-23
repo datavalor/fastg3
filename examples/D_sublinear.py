@@ -9,8 +9,8 @@ import sys
 sys.path.insert(1, '../')
 import fastg3.ncrisp as g3ncrisp
 
-n=30000
-n_sampled=3000
+n=20000
+n_sampled=20000
 df = data("diamonds").sample(n=n, replace=True, random_state=27).reset_index(drop=True)
 # print(df.head())
 
@@ -19,16 +19,16 @@ xparams = {
         'type': 'numerical',
         'predicate': 'metric',
         'metric': 'absolute',
-        'thresold': 50
+        'thresold': 0.05
     },
     'cut':{
         'type': 'categorical',
         'predicate': 'equality'
     },
-    # 'color':{
-    #     'type': 'categorical',
-    #     'predicate': 'equality'
-    # },
+    'color':{
+        'type': 'categorical',
+        'predicate': 'equality'
+    },
     'clarity':{
         'type': 'categorical',
         'predicate': 'equality'
@@ -40,7 +40,7 @@ yparams = {
         'type': 'numerical',
         'predicate': 'metric',
         'metric': 'absolute',
-        'thresold': 50
+        'thresold': 10
     }
 }
 

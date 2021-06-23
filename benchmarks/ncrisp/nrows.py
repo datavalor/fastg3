@@ -74,7 +74,7 @@ def approx_test(dataset_name, frac_samples):
 if __name__ == '__main__':    
     STEP=1/N_STEPS
     frac_samples = list(np.arange(STEP, 1+STEP, STEP))
-    for dataset_name in ['diamonds', 'hydroturbine', 'syn']:
+    for dataset_name in ['diamonds', 'hydroturbine']:#, 'syn']:
         for test_name in ['time', 'approx']:
             script_name = inspect.stack()[0].filename.split('.')[0]
             file_path = './'+path.join(DILL_FOLDER, f'{script_name}_{test_name}_{dataset_name}.d')
@@ -87,7 +87,8 @@ if __name__ == '__main__':
                 to_benchmark, labels, yaxis_name = time_test(dataset_name, frac_samples)
             else:
                 to_benchmark, labels, yaxis_name = approx_test(dataset_name, frac_samples)
-            fig, ax = plot_bench(to_benchmark, 
+            fig, ax = plot_bench(
+                to_benchmark, 
                 frac_samples, 
                 labels, 
                 xlabel="Number of tuples", 

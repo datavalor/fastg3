@@ -117,11 +117,11 @@ if __name__ == '__main__':
 
 
     # print("GIC cover", gic)
-    # print("-> Exact computation")
-    # start=time.time()
-    # wgyc = rg3.exact(method="wgyc")
-    # print(f'WeGotYouCovered value computed in {time.time()-start}s')
-    # print("Exact g3 is", wgyc)
+    print("-> Exact computation")
+    start=time.time()
+    wgyc = rg3.exact(method="wgyc")
+    print(f'WeGotYouCovered value computed in {time.time()-start}s')
+    print("Exact g3 is", wgyc)
 
     # print(VPE.enum_vps())
 

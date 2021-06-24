@@ -103,7 +103,7 @@ cdef class SubGIC:
 
         return mvc_sum/n
 
-    cdef bool add_ranked_degree(self, size_t degree, size_t v_obj) nogil:
+    cdef void add_ranked_degree(self, size_t degree, size_t v_obj) nogil:
         # Getting node list and sorting by rank
         cdef cpp_vector[vwr] node_list = self.ranked_degree_map[degree]
         qsort(&node_list[0], node_list.size(), sizeof(node_list[0]), comp_vertex_with_ranking)
@@ -115,20 +115,18 @@ cdef class SubGIC:
             size_t i
             size_t j
             index_vector neighbors
-            bool v_obj_found = False
         for i in range(node_list.size()):
                 v_index = node_list[i].first
-                # Adding if possible
+                # Updating cover if needed
                 if self.cover.find(v_index)==self.cover.end():
                     neighbors=self.G.neighbors(v_index)
-                    # with gil: print("ADDED", node_list[j], neighbors1)
-                    for j in range(neighbors.size()):
-                        n_index = neighbors[j]
-                        if n_index==v_obj: v_obj_found = True 
-                        self.cover[n_index] = True
+                    for j in range(neighbors.size()): self.cover[neighbors[j]] = True
                     self.cover[v_index] = False
+                # Early stopping if possible
+                if self.cover.find(v_obj) != self.cover.end(): 
+                    self.ranked_degree_map[degree].clear()
+                    return
         self.ranked_degree_map[degree].clear()
-        return v_obj_found
 
     cdef double get_vertex_rank(self, size_t v_index) nogil:
         if self.vertex_ranking.find(v_index)==self.vertex_ranking.end():
@@ -162,7 +160,8 @@ cdef class SubGIC:
 
             if to_visit and n_degree<v_degree:
                 if self.dfs(n_index, v_obj): return True
-                if self.add_ranked_degree(n_degree, v_obj): return True
+                self.add_ranked_degree(n_degree, v_obj) 
+                if self.cover.find(v_obj)!=self.cover.end(): return True
             elif to_visit and n_degree==v_degree:
                 if self.dfs(n_index, v_obj): return True
         

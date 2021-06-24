@@ -11,11 +11,11 @@ from libcpp.vector cimport vector as cpp_vector
 from libcpp.pair cimport pair
 from libcpp cimport bool
 from libc.stdlib cimport rand, RAND_MAX, qsort
-from cython.operator import dereference, postincrement
 
 ctypedef cpp_vector[size_t] index_vector
 ctypedef unordered_map[size_t, double] ranking_map
 ctypedef pair[size_t, size_t] vwd #(vertex, degree)
+ctypedef pair[size_t, double] vwr #(vertex, ranking)
 
 cdef extern from "pair_hash.h":
     cdef cppclass pair_hash:
@@ -30,11 +30,10 @@ cdef extern from "math.h":
 cdef inline size_t _rand_from_one_to(size_t b) nogil:
     return <size_t> rand() % b + 1;
 
-
-cdef int comp_vertex_with_degree(const void * a, const void * b) nogil:
+cdef int comp_vertex_with_ranking(const void * a, const void * b) nogil:
     cdef:
-        vwd a_e = (<vwd*> a)[0]
-        vwd b_e = (<vwd*> b)[0]
+        vwr a_e = (<vwr*> a)[0]
+        vwr b_e = (<vwr*> b)[0]
     if a_e.second<b_e.second: return -1
     else: return 1
 
@@ -44,9 +43,10 @@ cdef class SubGIC:
         VPEGraph G
         index_vector nodes
         int nodes_list
-        unordered_map[size_t, bool] cover
+        unordered_map[size_t, bool] cover # -1 being visited, 0 not in cover, 1 in cover
         unordered_map[size_t, bool] discovered
         ranking_map vertex_ranking
+        unordered_map[size_t, cpp_vector[vwr]] ranked_degree_map
 
     def __cinit__(self, VPEGraph G):
         self.G = G
@@ -56,22 +56,23 @@ cdef class SubGIC:
     cdef reset(self):
         self.cover.clear()
 
-    cpdef double estimate_mvc_size(self, size_t n):
+    def estimate_mvc_size(self, size_t n):
+        # Initialisation
         try:
             assert n<=self.nodes.size()
         except AssertionError: 
             logger.error(f"Error: Sample size must be lower than the number of nodes in graph ({self.G.number_of_nodes()})")
             raise
-
         self.reset()
+
+        # Reservoir sampling
         cdef: 
             index_vector v_sample
             size_t i
             size_t j
-            int mvc_sum = 0
+            
             double W
         with nogil:
-            # Reservoir sampling
             for i in range(n):
                 v_sample.push_back(self.nodes[i])
             W=exp(log(rand()/RAND_MAX)/n)
@@ -82,51 +83,87 @@ cdef class SubGIC:
                     v_sample[_rand_from_one_to(n)-1] = self.nodes[i]
                     W*=exp(log(rand()/RAND_MAX)/n)
         
-        for i in range(v_sample.size()):
-            # print(f'--------------------> {v_sample[i]} - {self.G.neighbors(v_sample[i])} neighbors')
-            self.discovered.clear()
-            if self.vertex_oracle(v_sample[i]):
-                mvc_sum+=1
+        # Exploring sampled vertices
+        cdef:
+            size_t v_index
+            size_t v_degree
+            int mvc_sum = 0
+        with nogil:
+            for i in range(v_sample.size()):
+                v_index = v_sample[i]
+                v_degree = self.G.degree(v_sample[i])
+                # print(f'##############> {v_sample[i]} - {self.G.neighbors(v_sample[i])} neighbors')
+                self.ranked_degree_map.clear()
+                self.discovered.clear()
+                if self.cover.find(v_index) == self.cover.end() and not self.dfs(v_index, v_index):
+                    self.add_ranked_degree(self.G.degree(v_index), v_index)
+                if self.cover[v_index]: mvc_sum += 1
+
+        # print(len(self.cover), "vertices explored total!")
 
         return mvc_sum/n
 
-    cdef double get_vertex_rank(self, size_t v) nogil:
-        if self.vertex_ranking.find(v)==self.vertex_ranking.end():
-            self.vertex_ranking[v] = rand()/RAND_MAX
-            return self.vertex_ranking[v]
-        else:
-            return self.vertex_ranking[v]
+    cdef bool add_ranked_degree(self, size_t degree, size_t v_obj) nogil:
+        # Getting node list and sorting by rank
+        cdef cpp_vector[vwr] node_list = self.ranked_degree_map[degree]
+        qsort(&node_list[0], node_list.size(), sizeof(node_list[0]), comp_vertex_with_ranking)
 
-    cdef bool vertex_oracle(self, size_t v) nogil:
-        self.discovered[v] = True
-        if self.cover.find(v) != self.cover.end(): 
-            return self.cover[v]
-
-        cdef: 
-            index_vector neighbors = self.G.neighbors(v)
-            cpp_vector[vwd] neighbors_wd
-            size_t v_degree = neighbors.size()
+        # Handling sorted nodes one by one
+        cdef:
+            size_t v_index
+            size_t n_index
             size_t i
+            size_t j
+            index_vector neighbors
+            bool v_obj_found = False
+        for i in range(node_list.size()):
+                v_index = node_list[i].first
+                # Adding if possible
+                if self.cover.find(v_index)==self.cover.end():
+                    neighbors=self.G.neighbors(v_index)
+                    # with gil: print("ADDED", node_list[j], neighbors1)
+                    for j in range(neighbors.size()):
+                        n_index = neighbors[j]
+                        if n_index==v_obj: v_obj_found = True 
+                        self.cover[n_index] = True
+                    self.cover[v_index] = False
+        self.ranked_degree_map[degree].clear()
+        return v_obj_found
+
+    cdef double get_vertex_rank(self, size_t v_index) nogil:
+        if self.vertex_ranking.find(v_index)==self.vertex_ranking.end():
+            self.vertex_ranking[v_index] = rand()/RAND_MAX
+            return self.vertex_ranking[v_index]
+        else:
+            return self.vertex_ranking[v_index]
+
+    cdef bool dfs(self, size_t v_index, size_t v_obj) nogil:
+        self.discovered[v_index] = True
+        # Getting vertex infos
+        cdef: 
+            index_vector v_neighbors = self.G.neighbors(v_index)
+            size_t v_degree = v_neighbors.size()
+            double v_ranking = self.get_vertex_rank(v_index)
+            vwr v_vwr = vwr(v_index, v_ranking)
+        self.ranked_degree_map[v_degree].push_back(v_vwr)
+
+        # Exploring
+        cdef:
             size_t n_index
             size_t n_degree
+            size_t i
             bool to_visit
-            double v_ranking
         for i in range(v_degree):
-            neighbors_wd.push_back(vwd(neighbors[i], self.G.degree(neighbors[i])))
-        qsort(&neighbors_wd[0], neighbors_wd.size(), sizeof(neighbors_wd[0]), comp_vertex_with_degree)
-        i = 0
-        while(i<v_degree and neighbors_wd[i].second <= v_degree):
-            n_index = neighbors_wd[i].first
-            n_degree = neighbors_wd[i].second
-            to_visit=True
-            if self.discovered.find(n_index) != self.discovered.end() or self.cover.find(n_index) != self.cover.end():
-                to_visit=False
-            if to_visit and (n_degree<v_degree or (n_degree==v_degree and self.get_vertex_rank(n_index)<self.get_vertex_rank(v))):
-                self.vertex_oracle(n_index)
-                if self.cover.find(v) != self.cover.end():
-                    return self.cover[v]
-            i+=1
+            n_index = v_neighbors[i]
+            n_degree = self.G.degree(n_index)
+            
+            if self.discovered.find(n_index) != self.discovered.end() or self.cover.find(n_index) != self.cover.end(): to_visit=False
+            else: to_visit=True
 
-        for i in range(neighbors.size()): self.cover[neighbors[i]] = True
-        self.cover[v] = False
+            if to_visit and n_degree<v_degree:
+                if self.dfs(n_index, v_obj): return True
+                if self.add_ranked_degree(n_degree, v_obj): return True
+            elif to_visit and n_degree==v_degree:
+                if self.dfs(n_index, v_obj): return True
+        
         return False

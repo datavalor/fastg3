@@ -150,19 +150,15 @@ cdef class SubGIC:
             size_t n_index
             size_t n_degree
             size_t i
-            bool to_visit
         for i in range(v_degree):
             n_index = v_neighbors[i]
             n_degree = self.G.degree(n_index)
-            
-            if self.discovered.find(n_index) != self.discovered.end() or self.cover.find(n_index) != self.cover.end(): to_visit=False
-            else: to_visit=True
-
-            if to_visit and n_degree<v_degree:
-                if self.dfs(n_index, v_obj): return True
-                self.add_ranked_degree(n_degree, v_obj) 
-                if self.cover.find(v_obj)!=self.cover.end(): return True
-            elif to_visit and n_degree==v_degree and self.get_vertex_rank(n_index)<v_ranking:
-                if self.dfs(n_index, v_obj): return True
+            if self.discovered.find(n_index) == self.discovered.end() and self.cover.find(n_index) == self.cover.end():
+                if n_degree<v_degree:
+                    if self.dfs(n_index, v_obj): return True
+                    self.add_ranked_degree(n_degree, v_obj) 
+                    if self.cover.find(v_obj)!=self.cover.end(): return True
+                elif n_degree==v_degree and self.get_vertex_rank(n_index)<v_ranking:
+                    if self.dfs(n_index, v_obj): return True
         
         return False

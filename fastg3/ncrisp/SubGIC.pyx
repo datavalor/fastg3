@@ -162,7 +162,7 @@ cdef class SubGIC:
                 if self.dfs(n_index, v_obj): return True
                 self.add_ranked_degree(n_degree, v_obj) 
                 if self.cover.find(v_obj)!=self.cover.end(): return True
-            elif to_visit and n_degree==v_degree:
+            elif to_visit and n_degree==v_degree and self.get_vertex_rank(n_index)<v_ranking:
                 if self.dfs(n_index, v_obj): return True
         
         return False

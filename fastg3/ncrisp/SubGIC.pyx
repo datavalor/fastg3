@@ -14,12 +14,7 @@ from libc.stdlib cimport rand, RAND_MAX, qsort
 
 ctypedef cpp_vector[size_t] index_vector
 ctypedef unordered_map[size_t, double] ranking_map
-ctypedef pair[size_t, size_t] vwd #(vertex, degree)
 ctypedef pair[size_t, double] vwr #(vertex, ranking)
-
-cdef extern from "pair_hash.h":
-    cdef cppclass pair_hash:
-        pass
 
 cdef extern from "math.h":
     double log(double x) nogil

@@ -147,7 +147,7 @@ cdef Dataframe * _create_dataframe(df, dict attrs):
 
         string enc_col
         string metric
-        double thresold
+        cpp_vector[double] params
         size_t i
         bool added
     for col in attrs:
@@ -156,20 +156,20 @@ cdef Dataframe * _create_dataframe(df, dict attrs):
         else:
             dt = df[col].dtype
             enc_col = str.encode(col)
-            metric = str.encode(attrs[col]['metric'])
-            thresold = attrs[col].get("thresold", 0)
+            predicate = str.encode(attrs[col]['predicate'])
+            params = attrs[col]["params"]
             added = True
             logger.debug(f'Handling column [{col}] of type [{dt}].')    
             if dt=='int64':
                 long_arr = np.ascontiguousarray(df[col])
-                dereference(dfc).add_column[long](enc_col, &long_arr[0], metric, thresold)
+                dereference(dfc).add_column[long](enc_col, &long_arr[0], predicate, params)
             elif dt=='float64':
                 double_arr = np.ascontiguousarray(df[col])
-                dereference(dfc).add_column[double](enc_col, &double_arr[0], metric, thresold)
+                dereference(dfc).add_column[double](enc_col, &double_arr[0], predicate, params)
             elif dt=='object':
                 str_arr=df[col].to_numpy()
                 for i in range(n_rows): strb_arr.push_back(str.encode(str_arr[i]))
-                dereference(dfc).add_str_column(enc_col, strb_arr, metric, thresold)
+                dereference(dfc).add_str_column(enc_col, strb_arr, predicate, params)
                 strb_arr.clear()
             else:
                 added = False

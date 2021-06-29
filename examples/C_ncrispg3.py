@@ -10,9 +10,8 @@ df = data("diamonds").sample(n=100, random_state=27)
 xparams = {
     'carat':{
         'type': 'numerical',
-        'predicate': 'metric',
-        'metric': 'absolute',
-        'thresold': 0.05
+        'predicate': 'absolute_distance',
+        'params': [0.05]
     },
     'cut':{
         'type': 'categorical',
@@ -31,9 +30,8 @@ xparams = {
 yparams = {
     'price':{
         'type': 'numerical',
-        'predicate': 'metric',
-        'metric': 'absolute',
-        'thresold': 10
+        'predicate': 'absolute_distance',
+        'params': [10]
     }
 
 }
@@ -68,9 +66,9 @@ if __name__ == '__main__':
     start=time.time()
     maximal_matching = rg3.lower_bound(method="maxmatch")
     print(f'Maximal matching computed in {1000*(time.time()-start)}ms')
-    start=time.time()
-    maximum_matching = rg3.lower_bound(method="mvmatch")
-    print(f'Maximum matching computed in {1000*(time.time()-start)}ms')
+    # start=time.time()
+    # maximum_matching = rg3.lower_bound(method="mvmatch")
+    # print(f'Maximum matching computed in {1000*(time.time()-start)}ms')
 
     # Upper bound
     print("-> Upper bound")
@@ -90,6 +88,6 @@ if __name__ == '__main__':
         print("GIC:", sorted(gic))
         print("approx2:", sorted(gic))
     else:
-        print(f'{"{:.2f}".format(maximal_matching)} <= {"{:.2f}".format(maximum_matching)} <= g3={"{:.2f}".format(wgyc)} <= {"{:.2f}".format(numvc)} <= {"{:.2f}".format(gic)} <= {"{:.2f}".format(approx2)}')
+        print(f'{"{:.2f}".format(maximal_matching)} <= g3={"{:.2f}".format(wgyc)} <= {"{:.2f}".format(numvc)} <= {"{:.2f}".format(gic)} <= {"{:.2f}".format(approx2)}')
     
     

@@ -19,56 +19,74 @@ logging.basicConfig(level=logging.DEBUG)
 
 from .VPE import VPE
 
-AUTHORIZED_TYPES = ['numerical', 'categorical', 'datetime']
-AUTHORIZED_PREDICATES = ['metric', 'equality'] # other one day
-AUTHORIZED_NUM_METRICS = ['absolute'] 
-AUTHORIZED_STR_METRICS = ['edit_distance'] 
+PREDICATES = {
+    'equality': {
+        'params': 0,
+        'monotonic': True
+    },
+    'absolute_distance': {
+        'params': 1, #[thresold]
+        'monotonic': True
+    },
+    'abs_rel_uncertainties': {
+        'params': 2, #[abs_uncertainty, rel_uncertainty]
+        'monotonic': True
+    },
+    'edit_distance': {
+        'params': 1 #[thresold]
+    }
+
+}
 AUTHORIZED_JOINS = ['auto', 'brute_force', 'ordered'] 
+CONSTRAINTS = {
+    'numerical': {
+        'predicates': ['equality', 'absolute_distance', 'abs_rel_uncertainties'],
+        'check_type': 'not is_string_dtype(df[attr])'
+    },
+    'categorical': {
+        'predicates': ['equality', 'edit_distance'],
+        'check_type': 'True'
+    },
+    'datetime': {
+        'predicates': ['equality', 'absolute_distance'],
+        'check_type': 'np.issubdtype(df[attr].dtype, np.datetime64)'
+    }
+}
+
+def _check_attr(attr, attr_params, df):
+    prefix = f"[{attr}]: "
+    if attr not in df.columns:
+        logger.warning(f'{prefix}Attribute not in provided dataframe. Attribute ignored.')
+        return False, None
+    authorized_types = list(CONSTRAINTS.keys())
+    if 'type' not in attr_params or attr_params['type'] not in authorized_types:
+        logger.warning(f'{prefix}No type or invalid type provided. Avalaible types are {authorized_types}. Attribute ignored.')
+        return False, None
+    attr_type = CONSTRAINTS[attr_params['type']]
+    if not eval(attr_type['check_type']):
+        logger.warning(f'{prefix}Should be {attr_params["type"]} but invalid Pandas column type! Should respect: {attr_type["check_type"]}')
+        return False, None
+    authorized_predicates = attr_type['predicates']
+    if "predicate" not in  attr_params or attr_params['predicate'] not in authorized_predicates:
+        logger.warning(f'{prefix}No or invalid predicate. Avalaible predicates are {authorized_predicates}. Attribute ignored.')
+        return False, None
+    if 'params' not in attr_params: attr_params['params']=[]
+    n_required_params = PREDICATES[attr_params['predicate']]['params']
+    if len(attr_params['params'])!=n_required_params:
+        logger.warning(f'{prefix}Invalid number of parameters. Exactly {n_required_params} required params for {attr_params["predicate"]}. Attribute ignored.')
+        return False, None
+    return True, attr_params
 
 def _clean_params(
     params: dict, 
     df: dict
 ) -> dict:
     for attr in params.copy():
-        to_remove = False
-        if attr not in df.columns:
-            logger.warning(f'Attribute [{attr}] not in provided dataframe. Attribute ignored.')
-            to_remove = True
-        elif 'type' not in params[attr] or params[attr]['type'] not in AUTHORIZED_TYPES:
-            logger.warning(f'No type or invalid type provided for [{attr}]. Available types are: {AUTHORIZED_TYPES}. Attribute ignored.')
-            to_remove = True
-        elif params[attr]['type']=='numerical' and is_string_dtype(df[attr]):
-            logger.warning(f'[{attr}] is supposed to be a numerical but it seems to be string type... Attribute ignored.')
-            to_remove = True
-        elif params[attr]['type']=='datetime' and not np.issubdtype(df[attr].dtype, np.datetime64):
-            logger.warning(f'[{attr}] is supposed to be of type datetime64 but it does not seem to be so... Attribute ignored.')
-            to_remove = True
+        to_keep, modified_params = _check_attr(attr, params[attr], df)
+        if to_keep:
+            params[attr] = modified_params
         else:
-            if 'predicate' not in params[attr]:
-                logger.info(f'No predicate type provided for [{attr}]. Equality chosen by default.')
-                params[attr]['predicate'] = 'equality'
-            elif params[attr]['predicate'] not in AUTHORIZED_PREDICATES:
-                logger.warning(f'Invalid predicate type provided for {attr}. Available predicates are: {AUTHORIZED_PREDICATES}. Attribute ignored.')
-                to_remove = True
-            elif params[attr]['predicate']=='metric':
-                if 'metric' not in params[attr] or params[attr]['metric'] not in AUTHORIZED_NUM_METRICS+AUTHORIZED_STR_METRICS:
-                    logger.warning(f'You chose to use a metric for [{attr}] but no metric or invalid metric provided.')
-                    logger.warning(f'Authorized metrics for numerical attributes: {AUTHORIZED_NUM_METRICS}')
-                    logger.warning(f'Authorized metrics for string attributes: {AUTHORIZED_STR_METRICS}')
-                    to_remove = True
-                if is_string_dtype(df[attr]) and params[attr]['metric'] not in AUTHORIZED_STR_METRICS:
-                    logger.warning(f'Invalid metric provided for string attribute. Available metrics are: {AUTHORIZED_STR_METRICS}')
-                    to_remove = True
-                if is_numeric_dtype(df[attr]) and params[attr]['metric'] not in AUTHORIZED_NUM_METRICS:
-                    logger.warning(f'Invalid metric provided for numerical attribute. Available metrics are: {AUTHORIZED_NUM_METRICS}')
-                    to_remove = True
-                elif 'thresold' not in params[attr] or not isinstance(params[attr]['thresold'], (int, float)):
-                    logger.warning(f'Yo chose to use a metric for [{attr}] bu no thresold or invalid thresold (must be numerical!) provided. Attribute ignored.')
-                    to_remove = True
-            
-            if params[attr]['predicate']=='equality':
-                params[attr]['metric'] = 'equality'
-        if to_remove: del params[attr]
+            del params[attr]
     return params
 
 def _handle_join(

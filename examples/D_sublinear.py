@@ -17,9 +17,8 @@ df = data("diamonds").sample(n=n, replace=True, random_state=27).reset_index(dro
 xparams = {
     'carat':{
         'type': 'numerical',
-        'predicate': 'metric',
-        'metric': 'absolute',
-        'thresold': 0.05
+        'predicate': 'absolute_distance',
+        'params': [0.05]
     },
     'cut':{
         'type': 'categorical',
@@ -38,9 +37,8 @@ xparams = {
 yparams = {
     'price':{
         'type': 'numerical',
-        'predicate': 'metric',
-        'metric': 'absolute',
-        'thresold': 10
+        'predicate': 'absolute_distance',
+        'params': [10]
     }
 }
 

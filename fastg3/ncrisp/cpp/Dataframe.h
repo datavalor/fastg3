@@ -56,7 +56,7 @@ public:
      * @return nothig
      */
     template <typename T>
-    void add_column(std::string name, T * attr, std::string metric, double threshold);
+    void add_column(std::string name, T * attr, std::string metric, std::vector<double> params);
 
     /**
      * Adds a string column of specified type in the dataframe.
@@ -68,7 +68,7 @@ public:
      * @param thresold Thresold under which two values of the column are considered similar under the metric.
      * @return nothig
      */
-    void add_str_column(std::string name, std::vector<std::string> attr, std::string metric, double threshold);
+    void add_str_column(std::string name, std::vector<std::string> attr, std::string metric,  std::vector<double> params);
 
     /**
      * Displays the column of given name on the standard output.
@@ -156,13 +156,13 @@ Dataframe::Dataframe(size_t* pindex, size_t pnrows): n_rows(pnrows){
 
 //~~~~~~~~~~~ General dataframe methods
 template <typename T>
-void Dataframe::add_column(std::string name, T * attr, std::string metric, double threshold){
-    attributes.push_back(NumAttribute<T>(attr, n_rows, metric, threshold));
+void Dataframe::add_column(std::string name, T * attr, std::string metric, std::vector<double> params){
+    attributes.push_back(NumAttribute<T>(attr, n_rows, metric, params));
     cols_map[name] = attributes.size()-1;
 }
 
-void Dataframe::add_str_column(std::string name, std::vector<std::string> attr, std::string metric, double threshold){
-    attributes.push_back(StrAttribute(attr, n_rows, metric, threshold));
+void Dataframe::add_str_column(std::string name, std::vector<std::string> attr, std::string metric, std::vector<double> params){
+    attributes.push_back(StrAttribute(attr, n_rows, metric, params));
     cols_map[name] = attributes.size()-1;
 }
 

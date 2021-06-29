@@ -1,3 +1,4 @@
+#distutils: language = c++
 from .c_Dataframe cimport Dataframe
 
 from cython.operator cimport dereference, postincrement

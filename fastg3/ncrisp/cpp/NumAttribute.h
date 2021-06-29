@@ -5,22 +5,25 @@
 #include <string>
 #include <exception>
 #include <unordered_map>
+#include <algorithm>
+#include <cmath>
 
 #include "NumDistance.h"
 
 std::unordered_map<std::string, int> AUTHORIZED_NUM_PREDICATES = {
     {"equality", 0},
-    {"absolute", 1},
+    {"absolute_distance", 1},
+    {"abs_rel_uncertainties", 2},
 };
 
 template <typename T>
 class NumAttribute{
     public:
-        NumAttribute(T* v, size_t n, std::string metric, double threshold): n_rows(n){
+        NumAttribute(T* v, size_t n, std::string predicate, std::vector<double> params): n_rows(n){
             value = std::vector<T>(v, v+n);
-            if(AUTHORIZED_NUM_PREDICATES.find(metric)!=AUTHORIZED_NUM_PREDICATES.end()){
-                this->metric_num = AUTHORIZED_NUM_PREDICATES[metric];
-                this->threshold = threshold;
+            if(AUTHORIZED_NUM_PREDICATES.find(predicate)!=AUTHORIZED_NUM_PREDICATES.end()){
+                this->predicate_num = AUTHORIZED_NUM_PREDICATES[predicate];
+                this->params = params;
             }
         }
         bool is_similar(size_t i, size_t j) const;
@@ -29,8 +32,8 @@ class NumAttribute{
     
     private:
         std::vector<T> value;
-        double threshold;
-        int metric_num;
+        std::vector<double> params;
+        int predicate_num;
         size_t n_rows;
         NumDistance<T> * ND = new NumDistance<T>();
 };
@@ -39,14 +42,15 @@ class NumAttribute{
 
 template <typename T>
 bool NumAttribute<T>::is_similar(size_t i, size_t j) const{
-    bool similar = false;
-    switch(metric_num){
-        case 0: if(ND->equality(value[i],value[j])) similar=true;
-                break;
-        case 1: if(ND->absolute(value[i],value[j]) <= threshold) similar=true;
-                break;
+    switch(predicate_num){
+        case 0: if(value[i]==value[j]) 
+                    return true;
+        case 1: if(std::abs(value[i]-value[j]) <= params[0]) 
+                    return true;
+        case 2: if(std::abs(value[i]-value[j]) <= (params[0]+params[1]*std::max(value[i],value[j]))) 
+                    return true;
     }
-    return similar;
+    return false;
 }
 
 template <typename T>

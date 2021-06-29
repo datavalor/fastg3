@@ -5,7 +5,6 @@ from distutils.extension import Extension
 from distutils.sysconfig import get_python_lib
 from Cython.Build import cythonize
 import numpy as np
-import glob
 
 cython_packages  = ["crisp", "ncrisp"]
 # print(cython_src)
@@ -30,7 +29,6 @@ setup(
     ext_modules = cythonize(
         extensions, 
         compiler_directives={'language_level' : "3", 'boundscheck': False, 'wraparound': False}
-        # compiler_directives={'language_level' : "3"}
     ),
     install_requires=[
         "numpy>=1.13.0",

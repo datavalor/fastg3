@@ -18,10 +18,10 @@ using strcol = std::vector<std::string>;
 
 class StrAttribute{
     public:
-        StrAttribute(strcol v, size_t n, std::string metric, double threshold): n_rows(n), value(v){
-            if(AUTHORIZED_STR_PREDICATES.find(metric)!=AUTHORIZED_STR_PREDICATES.end()){
-                this->metric_num = AUTHORIZED_STR_PREDICATES[metric];
-                this->threshold = threshold;
+        StrAttribute(strcol v, size_t n, std::string predicate, std::vector<double> params): n_rows(n), value(v){
+            if(AUTHORIZED_STR_PREDICATES.find(predicate)!=AUTHORIZED_STR_PREDICATES.end()){
+                this->predicate_num = AUTHORIZED_STR_PREDICATES[predicate];
+                this->params = params;
             }
         }
         bool is_similar(size_t i, size_t j) const;
@@ -29,8 +29,8 @@ class StrAttribute{
         void show_val(size_t i) const;
     
     private:
-        double threshold;
-        int metric_num;
+        std::vector<double> params;
+        int predicate_num;
         size_t n_rows;
         strcol value;
         StrDistance * SD = new StrDistance();
@@ -40,10 +40,10 @@ class StrAttribute{
 
 bool StrAttribute::is_similar(size_t i, size_t j) const{
     bool similar = false;
-    switch(metric_num){
+    switch(predicate_num){
         case 0: if(SD->equality(value[i],value[j])) similar=true;
                 break;
-        case 1: if(SD->edit_distance(value[i],value[j], value[i].length(), value[j].length()) <= threshold) similar=true;
+        case 1: if(SD->edit_distance(value[i],value[j], value[i].length(), value[j].length()) <= params[0]) similar=true;
                 break;
     }
     return similar;

@@ -16,7 +16,6 @@ ctypedef cpp_vector[size_t] index_vector
 
 cdef extern from "cpp/NumAttribute.h": pass
 cdef extern from "cpp/StrAttribute.h": pass
-cdef extern from "cpp/NumDistance.h": pass
 cdef extern from "cpp/StrDistance.h": pass
 
 cdef extern from "cpp/Dataframe.h":

@@ -6,7 +6,7 @@ from distutils.sysconfig import get_python_lib
 from Cython.Build import cythonize
 import numpy as np
 
-cython_packages  = ["crisp", "ncrisp"]
+cython_packages  = ["crisp"]
 # print(cython_src)
 extensions=[]
 for package in cython_packages:

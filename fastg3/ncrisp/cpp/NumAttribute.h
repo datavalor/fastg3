@@ -39,15 +39,19 @@ class NumAttribute{
 
 template <typename T>
 bool NumAttribute<T>::is_similar(size_t i, size_t j) const{
+    bool is_similar = false;
     switch(predicate_num){
-        case 0: if(value[i]==value[j]) 
-                    return true;
+        case 0: if(value[i]==value[j])
+                    is_similar=true;
+                break;
         case 1: if(std::abs(value[i]-value[j]) <= params[0]) 
-                    return true;
+                    is_similar=true;
+                break;
         case 2: if(std::abs(value[i]-value[j]) <= (params[0]+params[1]*std::max(value[i],value[j]))) 
-                    return true;
+                    is_similar=true;
+                break;
     }
-    return false;
+    return is_similar;
 }
 
 template <typename T>

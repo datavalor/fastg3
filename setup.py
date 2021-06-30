@@ -7,7 +7,7 @@ from Cython.Build import cythonize
 import numpy as np
 import glob
 
-cython_packages  = ["crisp"]#, "ncrisp"]
+cython_packages  = ["crisp", "ncrisp"]
 pyx_files = []
 for package in cython_packages:
     paths = glob.glob(f"fastg3/{package}/*.pyx")

@@ -39,14 +39,16 @@ class StrAttribute{
 /////////////////////////////////////////////////////// DEFINITION
 
 bool StrAttribute::is_similar(size_t i, size_t j) const{
-    bool similar = false;
+    bool is_similar = false;
     switch(predicate_num){
-        case 0: if(SD->equality(value[i],value[j])) similar=true;
+        case 0: if(value[i]==value[j]) 
+                    is_similar=true;
                 break;
-        case 1: if(SD->edit_distance(value[i],value[j], value[i].length(), value[j].length()) <= params[0]) similar=true;
+        case 1: if(SD->edit_distance(value[i], value[j], value[i].length(), value[j].length()) <= params[0])
+                    is_similar=true;
                 break;
     }
-    return similar;
+    return is_similar;
 }
 
 void StrAttribute::show_col() const{

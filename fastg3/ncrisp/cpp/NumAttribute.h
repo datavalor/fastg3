@@ -8,8 +8,6 @@
 #include <algorithm>
 #include <cmath>
 
-#include "NumDistance.h"
-
 std::unordered_map<std::string, int> AUTHORIZED_NUM_PREDICATES = {
     {"equality", 0},
     {"absolute_distance", 1},
@@ -35,7 +33,6 @@ class NumAttribute{
         std::vector<double> params;
         int predicate_num;
         size_t n_rows;
-        NumDistance<T> * ND = new NumDistance<T>();
 };
 
 /////////////////////////////////////////////////////// DEFINITION

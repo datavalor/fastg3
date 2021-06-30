@@ -1,21 +1,28 @@
 #!/usr/bin/env python3
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from distutils.extension import Extension
 from distutils.sysconfig import get_python_lib
 from Cython.Build import cythonize
 import numpy as np
+import glob
 
-cython_packages  = ["crisp"]
+cython_packages  = ["crisp"]#, "ncrisp"]
+pyx_files = []
+for package in cython_packages:
+    paths = glob.glob(f"fastg3/{package}/*.pyx")
+    for path in paths:
+        name = path.split("/")[-1][:-4]
+        pyx_files.append((name, path[0:], package))
+
 # print(cython_src)
 extensions=[]
-for package in cython_packages:
+for f in pyx_files:
     extensions.append(
         Extension(
-            f"fastg3/{package}/*.pyx",
-            sources=[f"fastg3/{package}/*.pyx"], 
-            include_dirs=[np.get_include(), ".", "fastg3/"],
-            library_dirs=[get_python_lib()],
+            f"fastg3.{f[2]}.{f[0]}",
+            sources=[f[1]], 
+            include_dirs=[np.get_include()],
             language="c++",
             extra_compile_args=["-std=c++17", "-O3", "-fopenmp"],
             extra_link_args=["-std=c++17", "-O3", "-fopenmp"],
@@ -25,7 +32,9 @@ for package in cython_packages:
 
 setup(
     name="fastg3",
+    packages=find_packages(),
     zip_safe=False,
+    # inplace=True,
     ext_modules = cythonize(
         extensions, 
         compiler_directives={'language_level' : "3", 'boundscheck': False, 'wraparound': False}

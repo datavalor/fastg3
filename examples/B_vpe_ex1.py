@@ -10,21 +10,18 @@ df = data("diamonds")
 xparams = {
     'carat':{
         'type': 'numerical',
-        'predicate': 'metric',
-        'metric': 'absolute',
-        'thresold': 0.05
+        'predicate': 'absolute_distance',
+        'params': [0.05]
     },
     'x':{
         'type': 'numerical',
-        'predicate': 'metric',
-        'metric': 'absolute',
-        'thresold': 0.05
+        'predicate': 'absolute_distance',
+        'params': [0.05]
     },
     'y':{
         'type': 'numerical',
-        'predicate': 'metric',
-        'metric': 'absolute',
-        'thresold': 0.05
+        'predicate': 'absolute_distance',
+        'params': [0.05]
     },
     'cut':{
         'type': 'categorical',
@@ -43,9 +40,8 @@ xparams = {
 yparams = {
     'price':{
         'type': 'numerical',
-        'predicate': 'metric',
-        'metric': 'absolute',
-        'thresold': 10
+        'predicate': 'absolute_distance',
+        'params': [10]
     }
 }
 

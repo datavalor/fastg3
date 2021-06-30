@@ -10,15 +10,13 @@ df = data("iris")
 xparams = {
     'Sepal.Length':{
         'type': 'numerical',
-        'predicate': 'metric',
-        'metric': 'absolute',
-        'thresold': 0
+        'predicate': 'absolute_distance',
+        'params': [0.05]
     },
     'Sepal.Width':{
         'type': 'numerical',
-        'predicate': 'metric',
-        'metric': 'absolute',
-        'thresold': 0
+        'predicate': 'absolute_distance',
+        'params': [0.05]
     }
 }
 

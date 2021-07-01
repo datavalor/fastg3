@@ -63,14 +63,14 @@ cdef class RSolver:
 
         if precompute:
             self.vp_enum()
+
+    cpdef vp_list vp_enum(self):
+        cdef size_t i
+        if not self.computed:
+            self.vps=self.vpe.enum_vps()
             for i in range(self.vps.size()):
                 self.vps_am[self.vps[i].first].push_back(self.vps[i].second)
                 self.vps_am[self.vps[i].second].push_back(self.vps[i].first)
-
-
-    cpdef vp_list vp_enum(self):
-        if not self.computed:
-            self.vps=self.vpe.enum_vps()
             self.computed=True
 
     def get_vps(self):
@@ -80,6 +80,7 @@ cdef class RSolver:
         """
         Provides the exact value of g3/mvc.
         """
+        self.vp_enum()
         cover = []
         if method=="wgyc":
             cover = self.wgyc(time_s=timeout)
@@ -91,6 +92,7 @@ cdef class RSolver:
         """
         Provides an upper bound on g3/mvc.
         """
+        self.vp_enum()
         cover = []
         if method=="gic":
             cover = self.gic()
@@ -106,6 +108,7 @@ cdef class RSolver:
         """
         Provides a lower bound on g3/mvc.
         """
+        self.vp_enum()
         size = []
         if method=="maxmatch":
             size = self.maximal_matching()

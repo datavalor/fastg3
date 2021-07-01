@@ -188,14 +188,18 @@ def _prepare_data(
             xparams[attr]["position"]=i
         logger.info(f"Attributes order optimized in the following way: {sorted_attrs}") 
     else:
-        join_attr = xjoin_candidates[0]
-        for i, attr in enumerate(xparams):
-            if attr==join_attr:
-                xparams[attr]["position"]=0
-            else:
-                xparams[attr]["position"]=i+1
-        sorted_attrs = sorted(list(xparams), key=lambda x: xparams[x]["position"])
-        logger.info(f"Non-optimized attribute order: {sorted_attrs}") 
+        if len(xjoin_candidates)==0:
+            join_type="brute_force"
+            join_attr=None
+        else:
+            join_attr = xjoin_candidates[0]
+            for i, attr in enumerate(xparams):
+                if attr==join_attr:
+                    xparams[attr]["position"]=0
+                else:
+                    xparams[attr]["position"]=i+1
+            sorted_attrs = sorted(list(xparams), key=lambda x: xparams[x]["position"])
+            logger.info(f"Non-optimized attribute order: {sorted_attrs}") 
 
     if join_attr is not None:
         logger.info(f"[{join_attr}] chosen for ordered join among following candidates {xjoin_candidates}.") 

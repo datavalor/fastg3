@@ -82,8 +82,9 @@ cdef class RSolver:
         """
         self.vp_enum()
         cover = []
-        if method=="wgyc":
-            cover = self.wgyc(time_s=timeout)
+        if self.vps.size()!=0:
+            if method=="wgyc":
+                cover = self.wgyc(time_s=timeout)
         
         if return_cover: return cover
         else: return len(cover)/self.n_tuples
@@ -94,12 +95,13 @@ cdef class RSolver:
         """
         self.vp_enum()
         cover = []
-        if method=="gic":
-            cover = self.gic()
-        elif method=="2approx":
-            cover = self.mvc_2_approx()
-        elif method=="numvc":
-            cover = self.numvc(time_s=numvc_time)
+        if self.vps.size()!=0:
+            if method=="gic":
+                cover = self.gic()
+            elif method=="2approx":
+                cover = self.mvc_2_approx()
+            elif method=="numvc":
+                cover = self.numvc(time_s=numvc_time)
 
         if return_cover: return cover
         else: return len(cover)/self.n_tuples
@@ -109,11 +111,12 @@ cdef class RSolver:
         Provides a lower bound on g3/mvc.
         """
         self.vp_enum()
-        size = []
-        if method=="maxmatch":
-            size = self.maximal_matching()
-        elif method=="mvmatch":
-            size = self.mv_matching()
+        size = 0
+        if self.vps.size()!=0:
+            if method=="maxmatch":
+                size = self.maximal_matching()
+            elif method=="mvmatch":
+                size = self.mv_matching()
         return size/self.n_tuples
 
     cdef cpp_vector[size_t] mvc_2_approx(self):

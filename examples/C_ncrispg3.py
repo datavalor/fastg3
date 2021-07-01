@@ -45,7 +45,7 @@ if __name__ == '__main__':
         join_type="auto",
         verbose=False)
 
-    return_cover=True
+    return_cover=False
 
     print(f'Diamond dataset contains {len(df.index)} rows.')
     print(len(VPE.enum_vps()), "violating pairs.")

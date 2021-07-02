@@ -5,7 +5,7 @@ import sys
 sys.path.insert(1, '../')
 import fastg3.ncrisp as g3ncrisp
 
-df = data("diamonds")#.sample(n=100, random_state=27)
+df = data("diamonds").sample(n=100, random_state=27)
 
 xparams = {
     'carat':{
@@ -46,13 +46,15 @@ if __name__ == '__main__':
         verbose=False)
 
     return_cover=False
-
-    print(f'Diamond dataset contains {len(df.index)} rows.')
-    print(len(VPE.enum_vps()), "violating pairs.")
-
+    
     start=time.time()
     rg3 = g3ncrisp.RSolver(VPE, precompute=True)
     print(f'Initialisation in {1000*(time.time()-start)}ms')
+
+    print(f'Diamond dataset contains {len(df.index)} rows.')
+    print(len(rg3.get_vps()), "violating pairs.")
+    print(rg3.get_vps())
+    print(rg3.get_vps(as_map=True))
 
     # Exact
     print("-> Exact computation")

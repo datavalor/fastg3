@@ -73,8 +73,12 @@ cdef class RSolver:
                 self.vps_am[self.vps[i].second].push_back(self.vps[i].first)
             self.computed=True
 
-    def get_vps(self):
-        return self.vps
+    def get_vps(self, as_map=False):
+        self.vp_enum()
+        if as_map:
+            return self.vps_am
+        else:
+            return self.vps
 
     def exact(self, method="wgyc", timeout=10, return_cover=False):
         """

@@ -1,2 +1,4 @@
 include fastg3/ncrisp/libs/wgyc
 include fastg3/ncrisp/libs/mvmatching
+include fastg3/ncrisp/*.so
+include fastg3/crisp/*.so

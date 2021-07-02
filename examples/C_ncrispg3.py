@@ -5,7 +5,7 @@ import sys
 sys.path.insert(1, '../')
 import fastg3.ncrisp as g3ncrisp
 
-df = data("diamonds").sample(n=100, random_state=27)
+df = data("diamonds")#.sample(n=100, random_state=27)
 
 xparams = {
     'carat':{

@@ -43,5 +43,6 @@ setup(
         "numpy>=1.13.0",
         "pandas>=1,<2"
     ],
+    include_package_data=True,
     python_requires=">=3.7",
 )

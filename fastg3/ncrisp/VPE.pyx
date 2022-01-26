@@ -38,6 +38,13 @@ cdef class VPE:
             blocks_dict[gname] = i
         return blocks, blocks_dict, pandas_groups.ngroup()
 
+    def check_feasability(self):
+        if len(self.selected_xattrs)==0 or len(self.selected_yattrs)==0:
+            logger.error(f'{len(self.selected_xattrs)} left attributes and {len(self.selected_yattrs)} right attributes remaining. VPE can\'t be done.')
+            return False
+        else:
+            return True
+
     def prepare_enumeration(self, df, dict x_attrs, dict y_attrs, blocking_attrs=[], str pjoin_type="brute_force", join_attr=None):
         # Handle join type and perform preprocessing when needed
         if pjoin_type=="ordered":
@@ -63,6 +70,7 @@ cdef class VPE:
         for attr in available_attributes:
             if attr.decode() in list(x_attrs.keys()): self.selected_xattrs.push_back(attr)
             if attr.decode() in list(y_attrs.keys()): self.selected_yattrs.push_back(attr)
+        if not self.check_feasability(): return False
 
         # Creates the blocks for blocking
         cdef:
@@ -81,10 +89,11 @@ cdef class VPE:
         dereference(self.dfc).set_block_index(row_group_col_vec)
 
         self.describe()
+        return True
 
     cpdef vp_list enum_vps(self):
         cdef size_t n_rows = self.number_of_rows()
-        if n_rows<=1: return []
+        if n_rows<=1 or not self.check_feasability(): return []
         cdef:
             vp_list vps
             vp_list vps_tmp
@@ -101,6 +110,7 @@ cdef class VPE:
         return vps
 
     cdef index_vector enum_neighboring_vps(self, size_t df_id) nogil:
+        # if not self.check_feasability(): return
         cdef:
             size_t row_id = self.dfc.get_mem_from_user_index(df_id)
             size_t block_id = self.dfc.get_block_index(row_id)
@@ -149,22 +159,21 @@ cdef Dataframe * _create_dataframe(df, dict attrs):
         string metric
         cpp_vector[double] params
         size_t i
-        bool added
     for col in attrs:
         if col not in df.columns:
-            raise Exception(f'Provided column [{col}] not in dataframe! Column ignored.')
+            logger.error(f'Provided column [{col}] not in dataframe! Column ignored.')
         else:
             dt = df[col].dtype
             enc_col = str.encode(col)
             predicate = str.encode(attrs[col]['predicate'])
             params = attrs[col]["params"]
-            added = True
             logger.debug(f'Handling column [{col}] of type [{dt}].')    
             if dt=='int64':
                 long_arr = np.ascontiguousarray(df[col])
                 dereference(dfc).add_column[long](enc_col, &long_arr[0], predicate, params)
             elif dt=='float64':
                 double_arr = np.ascontiguousarray(df[col])
+                print(enc_col)
                 dereference(dfc).add_column[double](enc_col, &double_arr[0], predicate, params)
             elif dt=='object':
                 str_arr=df[col].to_numpy()
@@ -172,6 +181,5 @@ cdef Dataframe * _create_dataframe(df, dict attrs):
                 dereference(dfc).add_str_column(enc_col, strb_arr, predicate, params)
                 strb_arr.clear()
             else:
-                added = False
-                raise Exception(f'Numpy dtype [{dt}] of column [{col}] not supported... yet! Column ignored.')
+                logger.error(f'Numpy dtype [{dt}] of column [{col}] not supported... yet! Column ignored.')
     return dfc

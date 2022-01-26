@@ -213,8 +213,8 @@ std::vector<size_t> Dataframe::get_user_index() const{
 
 attr_list Dataframe::get_columns(){
     attr_list cols;
-    for(attr_map::iterator it = cols_map.begin(); it != cols_map.end(); ++it) {
-        cols.push_back(it->first);
+    for(std::pair<std::string, size_t> col: cols_map) {
+        cols.push_back(col.first);
     }
     return cols;
 }

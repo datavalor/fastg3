@@ -71,48 +71,6 @@ if __name__ == '__main__':
     print("Sublinear GIC g3 is", sub_gic_cover)
     # print(f"Estimation: {estimated_size}")
 
-    # nodes_color = []
-    # for n in list(df.index):
-    #     if n in gic:
-    #         nodes_color.append('r')
-    #     else:
-    #         nodes_color.append('k')
-    # G = nx.Graph()
-    # G.add_nodes_from(list(df.index))
-    # G.add_edges_from(VPE.enum_vps())
-    # pos = nx.spring_layout(G, k=0.30, iterations=20, seed=27)
-    # nx.draw(G, 
-    #     nodelist=list(df.index),
-    #     node_size=5, 
-    #     with_labels=True, 
-    #     node_color=nodes_color,
-    #     pos=pos, 
-    #     font_size=9, 
-    #     width=0.1)
-    # plt.gcf().set_dpi(500)
-    # plt.savefig("./test.png")
-
-    # nodes_color = []
-    # for n in list(df.index):
-    #     if n in sub_gic_cover:
-    #         nodes_color.append('r')
-    #     else:
-    #         nodes_color.append('k')
-    # G = nx.Graph()
-    # G.add_nodes_from(list(df.index))
-    # G.add_edges_from(VPE.enum_vps())
-    # pos = nx.spring_layout(G, k=0.30, iterations=20, seed=27)
-    # nx.draw(G, 
-    #     nodelist=list(df.index),
-    #     node_size=5, 
-    #     with_labels=True, 
-    #     node_color=nodes_color,
-    #     pos=pos, 
-    #     font_size=9, 
-    #     width=0.1)
-    # plt.gcf().set_dpi(500)
-    # plt.savefig("./test2.png")
-
 
     # print("GIC cover", gic)
     print("-> Exact computation")
@@ -120,9 +78,6 @@ if __name__ == '__main__':
     wgyc = rg3.exact(method="wgyc")
     print(f'WeGotYouCovered value computed in {time.time()-start}s')
     print("Exact g3 is", wgyc)
-
-    # print(VPE.enum_vps())
-
 
     print("-> Sublinear computation")
     sub_solverY = g3ncrisp.Yoshida2009(g3ncrisp.VPEGraph(VPE))

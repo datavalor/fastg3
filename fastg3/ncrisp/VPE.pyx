@@ -40,7 +40,7 @@ cdef class VPE:
 
     def check_feasability(self):
         if len(self.selected_xattrs)==0 or len(self.selected_yattrs)==0:
-            logger.error(f'{len(self.selected_xattrs)} left attributes and {len(self.selected_yattrs)} right attributes remaining. VPE can\'t be done.')
+            logger.error(f'{len(self.selected_xattrs)} left attribute(s) and {len(self.selected_yattrs)} right attribute(s) remaining. Both sides must contain at least one attribute.')
             return False
         else:
             return True
@@ -161,7 +161,7 @@ cdef Dataframe * _create_dataframe(df, dict attrs):
         size_t i
     for col in attrs:
         if col not in df.columns:
-            logger.error(f'Provided column [{col}] not in dataframe! Column ignored.')
+            logger.warning(f'Provided column [{col}] not in dataframe! Column ignored.')
         else:
             dt = df[col].dtype
             enc_col = str.encode(col)
@@ -173,7 +173,6 @@ cdef Dataframe * _create_dataframe(df, dict attrs):
                 dereference(dfc).add_column[long](enc_col, &long_arr[0], predicate, params)
             elif dt=='float64':
                 double_arr = np.ascontiguousarray(df[col])
-                print(enc_col)
                 dereference(dfc).add_column[double](enc_col, &double_arr[0], predicate, params)
             elif dt=='object':
                 str_arr=df[col].to_numpy()
@@ -181,5 +180,5 @@ cdef Dataframe * _create_dataframe(df, dict attrs):
                 dereference(dfc).add_str_column(enc_col, strb_arr, predicate, params)
                 strb_arr.clear()
             else:
-                logger.error(f'Numpy dtype [{dt}] of column [{col}] not supported... yet! Column ignored.')
+                logger.warning(f'Numpy dtype [{dt}] of column [{col}] not supported... yet! Column ignored.')
     return dfc

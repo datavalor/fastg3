@@ -28,10 +28,6 @@ yparams = {
 }
 
 if __name__ == '__main__':
-    print(df.head())
-    print(pd.Categorical(df['Species']))
-    print(df.head())
-    df['Species'] = pd.Categorical(df['Species'])
     # Creates an interface with C++ object; errors will be return if any parameter is wrong
     VPE = g3ncrisp.create_vpe_instance(
         df, 

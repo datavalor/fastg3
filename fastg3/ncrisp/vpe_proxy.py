@@ -9,8 +9,7 @@ Author: Pierre Faure--Giovagnoli, 2021
 
 import numpy as np
 import pandas as pd
-from pandas.api.types import is_string_dtype
-from pandas.api.types import is_numeric_dtype
+from pandas.api.types import is_string_dtype, is_categorical_dtype, is_numeric_dtype
 import logging
 from typing import Tuple
 
@@ -149,14 +148,14 @@ def _prepare_data(
             if blocking:
                 xblocking.append(attr)
                 del xparams[attr]
-            elif is_string_dtype(df_clean[attr]):
+            elif is_string_dtype(df_clean[attr]) or is_categorical_dtype(df_clean[attr]):
                 df_clean[attr] = df_clean[attr].astype('category').cat.codes.astype('int64')
         elif is_numeric_dtype(df_clean[attr]):
             xjoin_candidates.append(attr)
 
     # Handling Y side
     for attr in yparams:
-        if yparams[attr]['predicate']=='equality' and is_string_dtype(df[attr]):
+        if yparams[attr]['predicate']=='equality' and (is_string_dtype(df[attr]) or is_categorical_dtype(df[attr])):
             df_clean[attr] = df_clean[attr].astype('category').cat.codes.astype('int64')
 
     # Choosing best ordering for antecedents and handling join

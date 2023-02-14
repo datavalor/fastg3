@@ -1,14 +1,13 @@
 # Test different known values of g3
+import time
 import timeit
 import tqdm
-from os import path
 import numpy as np
-import dill
 
 import init
-import fastg3.crisp as g3crisp
-from plot_utils import plot_bench
-from constants import N_REPEATS, N_STEPS, DILL_FOLDER
+from constants import N_REPEATS, N_STEPS, RES_FOLDER
+from bench_utils import gen_file_infos, gen_result_df, save_result
+
 
 SYN_N_TUPLES=1000000
 N_REPEATS=1
@@ -39,8 +38,8 @@ def time_test(variable_parameter, parameter_values):
             else:
                 exec(setup)
                 to_benchmark[cmd].append(1000*eval(f'g3_sql_bench(df, X, Y, n_repeats={N_REPEATS})'))
-    yaxis_name=f"Average time on {str(N_REPEATS)} runs (ms)"
-    return to_benchmark, labels, yaxis_name
+    y_label=f'Average time on {str(N_REPEATS)} runs (ms)'
+    return to_benchmark, labels, y_label
 
 def approx_test(variable_parameter, parameter_values):
     to_benchmark, labels = init.gen_sampling_benchmark()
@@ -54,8 +53,8 @@ def approx_test(variable_parameter, parameter_values):
                 exec(setup)
                 errors.append(abs(true_g3-eval(cmd)))
             to_benchmark[cmd].append(np.mean(errors))
-    yaxis_name=f"Absolute error"# mean on {str(N_REPEATS)} runs"
-    return to_benchmark, labels, yaxis_name
+    y_label='Absolute error'
+    return to_benchmark, labels, y_label
 
 MAX_NEC = 5000
 NEC_STEP = round(MAX_NEC/N_STEPS)
@@ -78,24 +77,28 @@ variables_settings = {
 if __name__ == '__main__':
     for variable_parameter in ['g3', 'nec', 'pdiff']:
         for test_name in ['approx']:#['time', 'approx']:
-            file_path = './'+path.join(DILL_FOLDER, f'syn_{variable_parameter}_{test_name}.d')
-            if path.isfile(file_path): 
-                print(f'{file_path} found! Skipping...')
-                continue
-            else:
-                print(f'{file_path} in progress...')
+            print(f'Current test: syn-{variable_parameter}, {test_name}')
+
+            # handle file
+            file_path, folder, exists = gen_file_infos(test_name, variable_parameter, RES_FOLDER)
+            if exists: continue
+
+            # execute tests
+            start = time.time()
             param_range = variables_settings[variable_parameter]['range']
-            if test_name=='time':
-                to_benchmark, labels, yaxis_name = time_test(variable_parameter, param_range)
-            else:
-                to_benchmark, labels, yaxis_name = approx_test(variable_parameter, param_range)
-            fig, ax  = plot_bench(
-                to_benchmark, 
-                param_range, 
-                labels, 
-                xlabel=variables_settings[variable_parameter]['xlabel'], 
-                ylabel=yaxis_name,
-                logy=False,
-                savefig=False
+            bench_func = time_test if test_name=='time' else approx_test
+            benchmark_res, y_legends, y_label = bench_func(variable_parameter, param_range)
+            bench_duration = time.time()-start
+
+            # create df from results
+            res_df = gen_result_df(param_range, benchmark_res, y_legends)
+
+            # save results
+            save_result(
+                res_df, 
+                variables_settings[variable_parameter]['xlabel'],
+                y_label,
+                bench_duration,
+                folder,
+                file_path
             )
-            dill.dump((fig), open(file_path, "wb"))

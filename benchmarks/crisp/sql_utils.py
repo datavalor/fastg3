@@ -10,20 +10,25 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
 
-engine = create_engine('mysql://pierrefg:0000@localhost/testg3', echo=False)
-TABLE_NAME = ''.join(random.choice(letters) for i in range(10))
-JOIN_CHAR = ', '
+try:
+    engine = create_engine('mysql://pierrefg:0000@localhost/testg3', echo=False)
+    TABLE_NAME = ''.join(random.choice(letters) for i in range(10))
+    JOIN_CHAR = ', '
 
-@event.listens_for(Engine, "before_cursor_execute")
-def before_cursor_execute(conn, cursor, statement,
-                        parameters, context, executemany):
-    conn.info.setdefault('query_start_time', []).append(time.time())
+    @event.listens_for(Engine, "before_cursor_execute")
+    def before_cursor_execute(conn, cursor, statement,
+                            parameters, context, executemany):
+        conn.info.setdefault('query_start_time', []).append(time.time())
 
-@event.listens_for(Engine, "after_cursor_execute")
-def after_cursor_execute(conn, cursor, statement,
-                        parameters, context, executemany):
-    ellapsed = time.time() - conn.info['query_start_time'].pop(-1)
-    conn.info['last_query_time'] = ellapsed
+    @event.listens_for(Engine, "after_cursor_execute")
+    def after_cursor_execute(conn, cursor, statement,
+                            parameters, context, executemany):
+        ellapsed = time.time() - conn.info['query_start_time'].pop(-1)
+        conn.info['last_query_time'] = ellapsed
+    
+    sql_available = True
+except:
+    sql_available = False
 
 def generate_request(X,Y):
     X = [f"`{attr}`" for attr in X]

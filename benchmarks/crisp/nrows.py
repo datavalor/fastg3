@@ -1,19 +1,18 @@
 # %%
+import time
 import timeit
 import tqdm
-from os import path
-import inspect
 import numpy as np
-import dill
 
 import init
-import fastg3.crisp as g3crisp
-from plot_utils import plot_bench
-from constants import N_REPEATS, N_STEPS, DILL_FOLDER
-from number_utils import format_number
+from constants import N_REPEATS, N_STEPS, RES_FOLDER
 from dataset_utils import AVAILABLE_DATASETS, load_dataset
+from bench_utils import gen_file_infos, gen_result_df, save_result
 
 MAX_SYN = 100000000
+
+from sql_utils import sql_available
+print(f'SQL available: {sql_available}')
 
 def gen_setup(dataset_name, f):
     return f'''
@@ -37,8 +36,8 @@ def time_test(dataset_name, frac_samples):
             else:
                 exec(setup)
                 to_benchmark[cmd].append(1000*eval(f'g3_sql_bench(df, X, Y, n_repeats={N_REPEATS})'))
-    yaxis_name=f"Average time on {str(N_REPEATS)} runs (ms)"
-    return to_benchmark, labels, yaxis_name
+    y_label=f"Average time on {str(N_REPEATS)} runs (ms)"
+    return to_benchmark, labels, y_label
 
 def approx_test(dataset_name, frac_samples):
     to_benchmark, labels = init.gen_sampling_benchmark()
@@ -48,36 +47,38 @@ def approx_test(dataset_name, frac_samples):
         true_g3=eval('g3crisp.g3_hash(df, X, Y)')
         for cmd in to_benchmark:
             to_benchmark[cmd].append(abs(true_g3-eval(cmd)))
-    yaxis_name=f"Absolute error"# mean on {str(N_REPEATS)} runs"
-    return to_benchmark, labels, yaxis_name
+    y_label=f"Absolute error"# mean on {str(N_REPEATS)} runs"
+    return to_benchmark, labels, y_label
 
 if __name__ == '__main__':    
     STEP=1/N_STEPS
     frac_samples = list(np.arange(STEP, 1+STEP, STEP))
+    print(f'Available datasets: {AVAILABLE_DATASETS}')
     for dataset_name in AVAILABLE_DATASETS:
         for test_name in ['time', 'approx']:
-            script_name = inspect.stack()[0].filename.split('.')[0]
-            file_path = './'+path.join(DILL_FOLDER, f'{script_name}_{test_name}_{dataset_name}.d')
-            if path.isfile(file_path): 
-                print(f'{file_path} found! Skipping...')
-                continue
-            else:
-                print(f'{file_path} in progress...')
-            if test_name=='time':
-                to_benchmark, labels, yaxis_name = time_test(dataset_name, frac_samples)
-            else:
-                to_benchmark, labels, yaxis_name = approx_test(dataset_name, frac_samples)
-            fig, ax = plot_bench(to_benchmark, 
-                frac_samples, 
-                labels, 
-                xlabel="Number of tuples", 
-                ylabel=yaxis_name,
-                logy=False,
-                savefig=False
+            print(f'Current test: {dataset_name}, {test_name}')
+
+            # handle file
+            file_path, folder, exists = gen_file_infos(test_name, dataset_name, RES_FOLDER)
+            if exists: continue
+
+            # execute tests
+            start = time.time()
+            bench_func = time_test if test_name=='time' else approx_test
+            benchmark_res, y_legends, y_label = bench_func(dataset_name, frac_samples)
+            bench_duration = time.time()-start
+
+            # create df from results
+            res_df = gen_result_df(frac_samples, benchmark_res, y_legends)
+
+            dataset_size = MAX_SYN if dataset_name=='syn' else len(load_dataset(dataset_name)[0].index)
+
+            # save results
+            save_result(
+                res_df, 
+                'Number of tuples',
+                y_label,
+                bench_duration,
+                folder,
+                file_path
             )
-            if dataset_name=='syn':
-                dataset_size=MAX_SYN
-            else:
-                dataset_size = len(load_dataset(dataset_name)[0].index)
-            ax.xaxis.set_major_formatter(lambda x, pos: format_number(x*dataset_size))
-            dill.dump((fig, {"dataset_size": dataset_size}), open(file_path, "wb"))

@@ -6,9 +6,10 @@ This library aims to be a fast and reliable solution for computing g3 in Python 
 
 # Installation
 
-For building and relative import (you need to install Cython, Pandas and Numpy first):
+For building and relative import:
 
 ``` bash
+python3 -m pip install -r requirements.txt
 python3 setup.py build_ext
 ```
 For installing:

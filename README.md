@@ -1,12 +1,12 @@
 # <img alt="fastg3" src="branding/logo_github_dark.png" height="80">
 
-Introduced in [1], the g3 indicator is of primary interest for measuring the veracity of a functionnal dependency (FD) in a relation. The g3-error and its opposite the confidence are at the core of many types of relaxed FDs and allowed important advances in FD mining but also more recently in supervised learning. For a relation r and a FD phi, g3 measures the proportion of tuples to remove from r for phi to be satisfied in r.
+Introduced in [1], the g3 indicator is of primary interest for measuring the veracity of a functional dependency (FD) in a relation. The g3-error and its opposite the confidence are at the core of many types of relaxed FDs and allowed important advances in FD mining but also more recently in supervised learning. For a relation r and a FD phi, g3 measures the proportion of tuples to remove from r for phi to be satisfied in r.
 
-This library aims to be a fast and reliable solution for computing g3 in Python for classic and relaxed FDs. Is has been desgined to be used with Pandas and its underlying Cython implementation along with its integrated sampling schemes allow for fast analysis of large datasets.
+This library aims to be a fast and reliable solution for computing g3 in Python for classic and relaxed FDs. Is has been designed to be used with Pandas and its underlying Cython implementation along with its integrated sampling schemes allow for fast analysis of large datasets.
 
 # Installation
 
-For building and relative import (you need to install cython, pandas and numpy first):
+For building and relative import (you need to install Cython, Pandas and Numpy first):
 
 ``` bash
 python3 setup.py build_ext

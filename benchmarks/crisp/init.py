@@ -6,14 +6,6 @@ sys.path.insert(1, '../utils/')
 sys.path.insert(1, '../')
 sys.path.insert(1, '../../')
 
-COLORMAP = [
-    {'color': 'k', 'marker': '', 'dash': (None,None)},
-    {'color': 'k', 'marker': '', 'dash': [1,1]},
-    {'color': 'k', 'marker': '', 'dash': [3,1]},
-    {'color': 'k', 'marker': 'o', 'dash': [1,1]},
-    {'color': 'k', 'marker': '', 'dash': [4,1,1,1]}
-][::-1]
-
 def gen_time_benchmark():
     to_benchmark = {
         "g3crisp.g3_sort(df, X, Y)":[],

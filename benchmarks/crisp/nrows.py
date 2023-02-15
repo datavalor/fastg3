@@ -59,7 +59,7 @@ if __name__ == '__main__':
             print(f'Current test: {dataset_name}, {test_name}')
 
             # handle file
-            file_path, folder, exists = gen_file_infos(test_name, dataset_name, RES_FOLDER)
+            file_path, exists = gen_file_infos(test_name, dataset_name, RES_FOLDER)
             if exists: continue
 
             # execute tests
@@ -70,7 +70,6 @@ if __name__ == '__main__':
 
             # create df from results
             res_df = gen_result_df(frac_samples, benchmark_res, y_legends)
-
             dataset_size = MAX_SYN if dataset_name=='syn' else len(load_dataset(dataset_name)[0].index)
 
             # save results
@@ -79,6 +78,5 @@ if __name__ == '__main__':
                 'Number of tuples',
                 y_label,
                 bench_duration,
-                folder,
                 file_path
             )

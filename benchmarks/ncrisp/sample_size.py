@@ -1,16 +1,17 @@
+import time
 import tqdm
-import matplotlib.pyplot as plt
 from os import path
 import inspect
 import numpy as np
-import dill
 
 import init
-import fastg3.crisp as g3crisp
-from number_utils import format_number
-from plot_utils import plot_bench
-from constants import N_REPEATS, N_STEPS, DILL_FOLDER
+from constants import N_REPEATS, N_STEPS, RES_FOLDER
 from dataset_utils import AVAILABLE_DATASETS, load_dataset
+from bench_utils import gen_file_infos, gen_result_df, save_result
+
+
+SELECTED_DATASETS = AVAILABLE_DATASETS.copy()
+SELECTED_DATASETS.remove('syn')
 
 STRING_TO_REPLACE='g3frvr'
 
@@ -51,14 +52,15 @@ def gen_to_benchmark():
     return to_benchmark, labels
 
 if __name__ == '__main__':
-    for dataset_name in ['diamonds', 'hydroturbine']:
-        script_name = inspect.stack()[0].filename.split('.')[0]
-        file_path = './'+path.join(DILL_FOLDER, f'{script_name}_{dataset_name}.d')
-        if path.isfile(file_path): 
-            print(f'{file_path} found! Skipping...')
-            continue
-        else:
-            print(f'{file_path} in progress...')
+    for dataset_name in SELECTED_DATASETS:
+        print(f'Current test: {dataset_name}')
+
+        # handle file
+        file_path, exists = gen_file_infos('approx', dataset_name, RES_FOLDER)
+        if exists: continue
+
+        # execute tests
+        start = time.time()
         exec(gen_setup(dataset_name, 1, footer=True))
         dataset_size = eval('len(df.index)')
 
@@ -68,20 +70,22 @@ if __name__ == '__main__':
             dataset_size=100000
         step=round(dataset_size/N_STEPS)
         sample_sizes=range(step, dataset_size+step, step)
-        to_benchmark, labels = gen_to_benchmark()
+        benchmark_res, y_legends = gen_to_benchmark()
         for ss in tqdm.tqdm(sample_sizes):
-            for cmd in to_benchmark:
+            for cmd in benchmark_res:
                 cmd_modified = cmd.replace(STRING_TO_REPLACE, str(ss))
                 exec(gen_setup(dataset_name, precompute=False))
-                to_benchmark[cmd].append(eval(cmd_modified)/true_g3)
+                benchmark_res[cmd].append(eval(cmd_modified)/true_g3)
+        bench_duration = time.time()-start
 
-        fig, ax = plot_bench(
-            to_benchmark,
-            sample_sizes, 
-            labels, 
-            xlabel="Number of sampled tuples", 
-            ylabel=f"Relative error",# mean on {str(N_REPEATS)} runs",
-            savefig=False
+        # create df from results
+        res_df = gen_result_df(sample_sizes, benchmark_res, y_legends)
+
+        # save results
+        save_result(
+            res_df, 
+            'Number of sampled tuples',
+            'Relative error',
+            bench_duration,
+            file_path
         )
-        ax.xaxis.set_major_formatter(lambda x, pos: format_number(x*dataset_size))
-        dill.dump((fig, {'dataset_size':dataset_size}), open(file_path, "wb"))

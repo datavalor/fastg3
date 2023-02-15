@@ -4,8 +4,8 @@ data/*
 fastg3/crisp/*.cpp
 fastg3/ncrisp/*.cpp
 *.html
-benchmarks/**/*.png
-benchmarks/*.csv
+benchmarks/**/*.csv
+benchmarks/**/*.svg
 *.vc
 
 # ----------- C++

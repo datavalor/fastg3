@@ -7,7 +7,12 @@ from pathlib import Path
 from diamonds_params import DIAMONDS_XPARAMS, DIAMONDS_YPARAMS
 from hydro_params import HYDRO_XPARAMS, HYDRO_YPARAMS
 
-AVAILABLE_DATASETS = ['diamonds', 'hydroturbine', 'syn']
+try:
+    path = Path(__file__).parent / "../hydroturbine.csv"
+    df = pd.read_csv(path)
+    AVAILABLE_DATASETS = ['diamonds', 'hydroturbine']#, 'syn']
+except:
+    AVAILABLE_DATASETS = ['diamonds']#, 'syn']
 MAX_ATTRS_DATASETS = {
     'diamonds': 10,
     'hydroturbine': 6,

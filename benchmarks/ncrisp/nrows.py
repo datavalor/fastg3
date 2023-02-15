@@ -1,18 +1,16 @@
 # %%
+import time
 import timeit
 import tqdm
-from os import path
-import inspect
 import numpy as np
-import dill
 
 import init
-import fastg3.crisp as g3crisp
-from plot_utils import plot_bench
-from number_utils import format_number
-from constants import N_REPEATS, N_STEPS, DILL_FOLDER
+from constants import N_REPEATS, N_STEPS, RES_FOLDER
 from dataset_utils import AVAILABLE_DATASETS, load_dataset
+from bench_utils import gen_file_infos, gen_result_df, save_result
 
+SELECTED_DATASETS = AVAILABLE_DATASETS.copy()
+SELECTED_DATASETS.remove('syn')
 MAX_SYN = 10000000
 
 def gen_setup(dataset_name, f, footer=True):
@@ -56,8 +54,8 @@ def time_test(dataset_name, frac_samples):
             else:
                 # exec(setup)
                 to_benchmark[cmd].append(1000*eval(f'g3_sql_bench(df, X, Y, n_repeats={N_REPEATS})'))
-    yaxis_name=f"Average time on {str(N_REPEATS)} runs (ms)"
-    return to_benchmark, labels, yaxis_name
+    y_label=f"Average time on {str(N_REPEATS)} runs (ms)"
+    return to_benchmark, labels, y_label
 
 def approx_test(dataset_name, frac_samples):
     to_benchmark, labels = init.gen_approx_benchmark()
@@ -68,35 +66,35 @@ def approx_test(dataset_name, frac_samples):
         for cmd in to_benchmark:
             exec(setup)
             to_benchmark[cmd].append(eval(cmd)/true_g3)
-    yaxis_name=f"Relative error"
-    return to_benchmark, labels, yaxis_name
+    y_label='Relative error'
+    return to_benchmark, labels, y_label
 
 if __name__ == '__main__':    
     STEP=1/N_STEPS
     frac_samples = list(np.arange(STEP, 1+STEP, STEP))
-    for dataset_name in ['diamonds', 'hydroturbine']:#, 'syn']:
+    for dataset_name in SELECTED_DATASETS:
         for test_name in ['time', 'approx']:
-            script_name = inspect.stack()[0].filename.split('.')[0]
-            file_path = './'+path.join(DILL_FOLDER, f'{script_name}_{test_name}_{dataset_name}.d')
-            if path.isfile(file_path): 
-                print(f'{file_path} found! Skipping...')
-                continue
-            else:
-                print(f'{file_path} in progress...')
-            if test_name=='time':
-                to_benchmark, labels, yaxis_name = time_test(dataset_name, frac_samples)
-            else:
-                to_benchmark, labels, yaxis_name = approx_test(dataset_name, frac_samples)
-            fig, ax = plot_bench(
-                to_benchmark, 
-                frac_samples, 
-                labels, 
-                xlabel="Number of tuples", 
-                ylabel=yaxis_name,
-                logy=False,
-                savefig=False
+            print(f'Current test: {dataset_name}, {test_name}')
+
+            # handle file
+            file_path, exists = gen_file_infos(test_name, dataset_name, RES_FOLDER)
+            if exists: continue
+            
+            # execute tests
+            start = time.time()
+            bench_func = time_test if test_name=='time' else approx_test
+            benchmark_res, y_legends, y_label = bench_func(dataset_name, frac_samples)
+            bench_duration = time.time()-start
+
+            # create df from results
+            res_df = gen_result_df(frac_samples, benchmark_res, y_legends)
+            dataset_size = MAX_SYN if dataset_name=='syn' else len(load_dataset(dataset_name)[0].index)
+            
+            # save results
+            save_result(
+                res_df, 
+                'Number of tuples',
+                y_label,
+                bench_duration,
+                file_path
             )
-            exec(gen_setup(dataset_name, 1, footer=False))
-            dataset_size = eval('len(df.index)')
-            ax.xaxis.set_major_formatter(lambda x, pos: format_number(x*dataset_size))
-            dill.dump((fig, {'dataset_size':dataset_size}), open(file_path, "wb"))

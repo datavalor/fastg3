@@ -2,4 +2,4 @@ MARKERSIZE = 3
 N_REPEATS = 2
 N_STEPS = 10
 GRAPH_FOLDER = 'graphs/'
-DILL_FOLDER = 'dill/'
+RES_FOLDER = 'res/'

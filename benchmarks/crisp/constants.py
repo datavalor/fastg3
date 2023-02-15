@@ -1,5 +1,5 @@
 MARKERSIZE = 3
-N_REPEATS = 10
+N_REPEATS = 1
 N_STEPS = 10
 GRAPH_FOLDER = 'graphs/'
-RES_FOLDER = 'res/'
+RES_FOLDER = 'csv/'

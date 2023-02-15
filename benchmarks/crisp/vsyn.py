@@ -80,7 +80,7 @@ if __name__ == '__main__':
             print(f'Current test: syn-{variable_parameter}, {test_name}')
 
             # handle file
-            file_path, folder, exists = gen_file_infos(test_name, variable_parameter, RES_FOLDER)
+            file_path, exists = gen_file_infos(test_name, variable_parameter, RES_FOLDER)
             if exists: continue
 
             # execute tests
@@ -99,6 +99,5 @@ if __name__ == '__main__':
                 variables_settings[variable_parameter]['xlabel'],
                 y_label,
                 bench_duration,
-                folder,
                 file_path
             )

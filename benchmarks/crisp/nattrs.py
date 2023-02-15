@@ -58,7 +58,7 @@ if __name__ == '__main__':
                 print(f'Current test: {dataset_name}, {test_name}')
 
                 # handle file
-                file_path, folder, exists = gen_file_infos(test_name, dataset_name, RES_FOLDER)
+                file_path, exists = gen_file_infos(test_name, dataset_name, RES_FOLDER)
                 if exists: continue
 
                 # execute tests
@@ -83,6 +83,5 @@ if __name__ == '__main__':
                     x_label,
                     y_label,
                     bench_duration,
-                    folder,
                     file_path
                 )

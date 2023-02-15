@@ -4,13 +4,11 @@ import tqdm
 from os import path
 import inspect
 import numpy as np
-import dill
 
 import init
-from plot_utils import plot_bench
-from number_utils import format_number
 from constants import N_REPEATS, N_STEPS, DILL_FOLDER
 from dataset_utils import AVAILABLE_DATASETS, load_dataset
+from bench_utils import gen_file_infos, gen_result_df, save_result
 
 def gen_setup(dataset_name, f, blocking=True, join_type="brute_force", opti_ordering=True, footer=True):
     header_str = f'''
@@ -43,47 +41,51 @@ if __name__ == '__main__':
     STEP=1/N_STEPS
     frac_samples = list(np.arange(STEP, 1+STEP, STEP))
     for dataset_name in ['diamonds', 'hydroturbine']:
+        print(f'Current test: {dataset_name}')
+
         if dataset_name=='hydroturbine':
-            labels = ["All optimisations"]
-            to_benchmark = {
+            y_legends = ["All optimisations"]
+            benchmark_res = {
                 (True, "ordered", True):[]
             }
         else:
-            to_benchmark = {
+            benchmark_res = {
                 (False, "brute_force", False):[],
                 (False, "brute_force", True):[],
                 (True, "brute_force", False):[],
                 (False, "ordered", False):[],
                 (True, "ordered", True):[],
             }
-            labels = [
+            y_legends = [
                 "VPE_BF (no optimisation)",
                 "VPE_COMPOPT",
                 "VPE_BLOCKOPT",
                 "VPE_ORDEROPT",
                 "All optimisations",
             ]
+
+        # handle file
+        file_path, exists = gen_file_infos('approx', dataset_name, RES_FOLDER)
+        if exists: continue
         script_name = inspect.stack()[0].filename.split('.')[0]
-        file_path = './'+path.join(DILL_FOLDER, f'{script_name}_{dataset_name}.d')
-        if path.isfile(file_path): 
-            print(f'{file_path} found! Skipping...')
-            continue
-        else:
-            print(f'{file_path} in progress...')
+
+        # execute tests
+        start = time.time()
         for f in tqdm.tqdm(frac_samples):
-            for cmd in to_benchmark:
+            for cmd in benchmark_res:
                 s=gen_setup(dataset_name, f, blocking=cmd[0], join_type=cmd[1], opti_ordering=cmd[2])
                 duration_mean = timeit.timeit("VPE.enum_vps()", setup=s, number=N_REPEATS)/N_REPEATS*1000
-                to_benchmark[cmd].append(duration_mean)
-        fig, ax = plot_bench(
-            to_benchmark, 
-            frac_samples, 
-            labels, 
-            xlabel="Number of tuples", 
-            ylabel=f"Average time on {str(N_REPEATS)} runs (ms)",
-            savefig=False
+                benchmark_res[cmd].append(duration_mean)
+        bench_duration = time.time()-start
+
+        # create df from results
+        res_df = gen_result_df(frac_samples, benchmark_res, y_legends)
+        
+        # save results
+        save_result(
+            res_df, 
+            'Number of tuples',
+            f'Average time on {str(N_REPEATS)} runs (ms)',
+            bench_duration,
+            file_path
         )
-        exec(gen_setup(dataset_name, 1, footer=False))
-        dataset_size = eval('len(df.index)')
-        ax.xaxis.set_major_formatter(lambda x, pos: format_number(x*dataset_size))
-        dill.dump((fig, {'dataset_size':dataset_size}), open(file_path, "wb"))

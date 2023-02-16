@@ -10,9 +10,9 @@ from hydro_params import HYDRO_XPARAMS, HYDRO_YPARAMS
 try:
     path = Path(__file__).parent / "../hydroturbine.csv"
     df = pd.read_csv(path)
-    AVAILABLE_DATASETS = ['diamonds', 'hydroturbine']#, 'syn']
+    AVAILABLE_DATASETS = ['diamonds', 'hydroturbine', 'syn']
 except:
-    AVAILABLE_DATASETS = ['diamonds']#, 'syn']
+    AVAILABLE_DATASETS = ['diamonds', 'syn']
 MAX_ATTRS_DATASETS = {
     'diamonds': 10,
     'hydroturbine': 6,

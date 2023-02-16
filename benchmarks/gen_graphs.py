@@ -3,15 +3,22 @@ import numpy as np
 import pandas as pd
 from itertools import takewhile
 from pathlib import Path
+import tqdm
 # from matplotlib2tikz import matplotlib2tikz
 
 import matplotlib
 import matplotlib.pyplot as plt
+# plt.rcParams.update({
+#     'font.family': 'serif',
+#     'font.size': 11,
+#     'text.usetex': True,
+#     'text.latex.preamble': r'\usepackage[libertine,cmintegrals,cmbraces,vvarbb]{newtxmath}'
+# })
 plt.rcParams.update({
     'font.family': 'serif',
     'font.size': 11,
     'text.usetex': True,
-    'text.latex.preamble': r'\usepackage[libertine,cmintegrals,cmbraces,vvarbb]{newtxmath}'
+    'text.latex.preamble': r'\usepackage{libertine} \usepackage[libertine]{newtxmath}'
 })
 # sudo apt-get install dvipng texlive-latex-extra texlive-fonts-recommended cm-super texlive-fonts-extra
 
@@ -46,7 +53,7 @@ for root, dirs, files in os.walk("./crisp"):
 
 if __name__ == "__main__":
     # print(csv_files)
-    for csv_path in csv_files:
+    for csv_path in tqdm.tqdm(csv_files):
         # converts to svg path
         svg_path = csv_path.replace("csv", "svg")
         svg_path = svg_path[:-3]
@@ -76,7 +83,6 @@ if __name__ == "__main__":
         ax.set(xlabel=metadata['x_label'])
         ax.set(ylabel=metadata['y_label'])
 
-        print(df.columns)
         x = df['x']
         df = df.drop(columns=['x'])
         min_y, max_y = np.inf, -np.inf

@@ -87,8 +87,9 @@ if __name__ == '__main__':
             bench_duration = time.time()-start
 
             # create df from results
-            res_df = gen_result_df(frac_samples, benchmark_res, y_legends)
-            dataset_size = MAX_SYN if dataset_name=='syn' else len(load_dataset(dataset_name)[0].index)
+            dataset_size = len(load_dataset(dataset_name)[0].index)
+            ntuples = np.array(dataset_size*np.array(frac_samples), dtype=np.int64)
+            res_df = gen_result_df(ntuples, benchmark_res, y_legends)
             
             # save results
             save_result(

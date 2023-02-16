@@ -1,3 +1,4 @@
+# test the influence of the number of antecedents
 import time
 import timeit
 import tqdm
@@ -53,35 +54,31 @@ def approx_test(dataset_name, frac_samples, cons=False):
 if __name__ == '__main__':
     print(f'Available datasets: {AVAILABLE_DATASETS}')
     for dataset_name in AVAILABLE_DATASETS:
-        for side in [(False, 'ants')]:#, (True, 'cons')]:
-            for test_name in ['time', 'approx']:
-                print(f'Current test: {dataset_name}, {test_name}')
+        for test_name in ['time']:#, 'time-cons']: testing antecedents and consequents
+            print(f'Current test: {dataset_name}, {test_name}')
 
-                # handle file
-                file_path, exists = gen_file_infos(test_name, dataset_name, RES_FOLDER)
-                if exists: continue
+            # handle file
+            file_path, exists = gen_file_infos(test_name, dataset_name, RES_FOLDER)
+            if exists: continue
 
-                # execute tests
-                start = time.time()
-                max_attrs = MAX_ATTRS_DATASETS[dataset_name]
-                step=round(max_attrs/N_STEPS)
-                if step<1: step=1
-                n_attrs = list(range(step, max_attrs, step))
-                if test_name=='time':
-                    benchmark_res, y_legends, y_label = time_test(dataset_name, n_attrs, side[0])
-                else:
-                    benchmark_res, y_legends, y_label = approx_test(dataset_name, n_attrs, side[1])
-                bench_duration = time.time()-start
+            # execute tests
+            start = time.time()
+            max_attrs = MAX_ATTRS_DATASETS[dataset_name]
+            step=round(max_attrs/N_STEPS)
+            if step<1: step=1
+            n_attrs = list(range(step, max_attrs, step))
+            x_label="Number of antecedents"
+            benchmark_res, y_legends, y_label = time_test(dataset_name, n_attrs, False)
+            bench_duration = time.time()-start
 
-                # create df from results
-                res_df = gen_result_df(n_attrs, benchmark_res, y_legends)
-        
-                # save results
-                x_label="Number of consequents" if side[0] else "Number of antecedents"
-                save_result(
-                    res_df, 
-                    x_label,
-                    y_label,
-                    bench_duration,
-                    file_path
-                )
+            # create df from results
+            res_df = gen_result_df(n_attrs, benchmark_res, y_legends)
+    
+            # save results
+            save_result(
+                res_df, 
+                x_label,
+                y_label,
+                bench_duration,
+                file_path
+            )

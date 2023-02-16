@@ -1,3 +1,4 @@
+import time
 import timeit
 from pydataset import data
 import tqdm
@@ -6,7 +7,7 @@ import inspect
 import numpy as np
 
 import init
-from constants import N_REPEATS, N_STEPS, DILL_FOLDER
+from constants import N_REPEATS, N_STEPS, RES_FOLDER
 from dataset_utils import AVAILABLE_DATASETS, load_dataset
 from bench_utils import gen_file_infos, gen_result_df, save_result
 
@@ -40,32 +41,26 @@ rg3 = g3ncrisp.RSolver(VPE, precompute=True)
 if __name__ == '__main__':
     STEP=1/N_STEPS
     frac_samples = list(np.arange(STEP, 1+STEP, STEP))
-    for dataset_name in ['diamonds', 'hydroturbine']:
+    for dataset_name in ['diamonds']:
         print(f'Current test: {dataset_name}')
 
-        if dataset_name=='hydroturbine':
-            y_legends = ["All optimisations"]
-            benchmark_res = {
-                (True, "ordered", True):[]
-            }
-        else:
-            benchmark_res = {
-                (False, "brute_force", False):[],
-                (False, "brute_force", True):[],
-                (True, "brute_force", False):[],
-                (False, "ordered", False):[],
-                (True, "ordered", True):[],
-            }
-            y_legends = [
-                "VPE_BF (no optimisation)",
-                "VPE_COMPOPT",
-                "VPE_BLOCKOPT",
-                "VPE_ORDEROPT",
-                "All optimisations",
-            ]
+        benchmark_res = {
+            (False, "brute_force", False):[],
+            (False, "brute_force", True):[],
+            (True, "brute_force", False):[],
+            (False, "ordered", False):[],
+            (True, "ordered", True):[],
+        }
+        y_legends = [
+            "VPE_BF",
+            "VPE_COMPOPT",
+            "VPE_BLOCKOPT",
+            "VPE_ORDEROPT",
+            "VPE_ALL",
+        ]
 
         # handle file
-        file_path, exists = gen_file_infos('approx', dataset_name, RES_FOLDER)
+        file_path, exists = gen_file_infos('time', dataset_name, RES_FOLDER)
         if exists: continue
         script_name = inspect.stack()[0].filename.split('.')[0]
 
@@ -79,7 +74,9 @@ if __name__ == '__main__':
         bench_duration = time.time()-start
 
         # create df from results
-        res_df = gen_result_df(frac_samples, benchmark_res, y_legends)
+        dataset_size = len(load_dataset(dataset_name)[0].index)
+        ntuples = np.array(dataset_size*np.array(frac_samples), dtype=np.int64)
+        res_df = gen_result_df(ntuples, benchmark_res, y_legends)
         
         # save results
         save_result(

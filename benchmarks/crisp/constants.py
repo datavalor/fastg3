@@ -1,3 +1,3 @@
 N_REPEATS = 10
 N_STEPS = 10
-RES_FOLDER = 'csv/'
+RES_FOLDER = 'res/'

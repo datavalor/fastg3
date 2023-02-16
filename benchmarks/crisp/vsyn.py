@@ -76,7 +76,7 @@ variables_settings = {
 
 if __name__ == '__main__':
     for variable_parameter in ['g3', 'nec', 'pdiff']:
-        for test_name in ['approx']:#['time', 'approx']:
+        for test_name in ['time', 'approx']:
             print(f'Current test: syn-{variable_parameter}, {test_name}')
 
             # handle file

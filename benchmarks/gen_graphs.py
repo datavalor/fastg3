@@ -48,7 +48,7 @@ def export_legend(legend, filename="legend.png"):
     fig.savefig(filename, dpi="figure", bbox_inches=bbox)
 
 if __name__ == "__main__":
-    for folder in ['./crisp', './ncrisp']:
+    for folder in ['./crisp', './ncrisp', './vpe']:
         csv_files = []
         for root, dirs, files in os.walk(folder):
             for file in files:

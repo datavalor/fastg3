@@ -49,6 +49,7 @@ def export_legend(legend, filename="legend.png"):
 
 if __name__ == "__main__":
     for folder in ['./crisp', './ncrisp', './vpe']:
+        print(f'Generating {folder} graphs')
         csv_files = []
         for root, dirs, files in os.walk(folder):
             for file in files:
@@ -85,6 +86,8 @@ if __name__ == "__main__":
             ax.spines['bottom'].set_visible(False)
             ax.set(xlabel=metadata['x_label'])
             ax.set(ylabel=metadata['y_label'])
+            if metadata['log']=='1':
+                ax.set_yscale('log')
 
             x = df['x']
             df = df.drop(columns=['x'])
